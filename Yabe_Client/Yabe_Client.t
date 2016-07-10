@@ -109,7 +109,7 @@ function Web_点选Boss(content,参_讯息="")
     if(网页元素选择("浏览器0",content,"tag:SELECT&name:Status&index:0"))
         
         if(C_调试)
-            messagebox("Boss","Check")
+            messagebox("Boss",C_帐密[0])
         end
         网页元素点击("浏览器0","tag:INPUT&value:Boss")
         //todo 要等頁面跳轉完
@@ -202,6 +202,8 @@ end
 
 
 功能 按钮2_点击()
+    Web_取VPN权限()
+    return
     //这里添加你要执行的代码
     //traceprint(网页元素选择("浏览器0","補送成功 - Try_again_Ok","tag:SELECT&name:Status&index:0"))
     变量 header = 数组()
@@ -212,8 +214,20 @@ end
     header["Cache-Control"] = "no-cache"
     变量 body = http提交请求("get","http://140.130.20.180/test.php?age=get","","utf-8",header)
     traceprint(body)
-    Web_取订单资料("臺灣")
+    
 结束
+
+function 异常推播(参_讯息)
+    var 局_讯息 = 窗口获取标题(窗口获取自我句柄()) & "    " & 参_讯息
+    变量 header = 数组()
+    header["Accept"] = "*/*"
+    header["User-Agent"] = "Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:17.0) Gecko/17.0 Firefox/17.0"
+    header["Accept-Language"] = "zh-CN,en-US;q=0.5"
+    header["Accept-Encoding"] = "deflate"
+    header["Cache-Control"] = "no-cache"
+    变量 body = http提交请求("get","http://ok963963ok.synology.me/Yabe/getError.php?Error="& 局_讯息,"","utf-8",header)
+    traceprint(body)
+end
 
 
 功能 Test_点击()
@@ -276,12 +290,12 @@ end
 功能 启动停止_点击()
     if(buttongettext("启动停止") == "啟動")
         buttonsettext("启动停止","停止")
-        主线程 = threadbegin("主线程","")
         文件覆盖内容(C_运作路径,"Run")
+        主线程 = threadbegin("主线程","")
     else
-        threadclose(主线程)
-        buttonsettext("启动停止","啟動")
         文件覆盖内容(C_运作路径,"Stop")
+        buttonsettext("启动停止","啟動")
+        threadclose(主线程)
     end
     
 结束

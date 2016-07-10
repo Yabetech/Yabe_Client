@@ -9,6 +9,11 @@ function init_Main()
     init_运作路径()
     initSqlPath()
     init_个别资料夹()
+    init_Running()
+end
+
+function init_Running()
+    文件覆盖内容(C_个别资料夹 & "Running.txt",指定时间("s",-30,当前时间()))
 end
 
 function initSqlPath() // 初始化Sqlite 路徑

@@ -1,9 +1,66 @@
-﻿
+﻿function Web_取VPN权限()
+    变量 header = 数组(),局_结果
+    header["Accept"] = "*/*"
+    header["User-Agent"] = "Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:17.0) Gecko/17.0 Firefox/17.0"
+    header["Accept-Language"] = "zh-CN,en-US;q=0.5"
+    header["Accept-Encoding"] = "deflate"
+    header["Cache-Control"] = "no-cache"
+    局_结果 = http提交请求("get","http://ok963963ok.synology.me/Yabe/YabeVpn.php?Device="& C_帐密[0] &"&OnOff=True","","utf-8",header)
+    //traceprint("http://ok963963ok.synology.me/Yabe/YabeVpn.php?Device="& C_帐密[0] &"&OnOff=True")
+    traceprint(局_结果)
+    if(strfind(局_结果,"Fail") > -1)
+        return false
+    else
+        staticsettext("状态","")//取得權限就清空狀態顯示
+        return true
+    end
+    
+end
+
+function Web_置VPN解锁()
+    变量 header = 数组(),局_结果
+    header["Accept"] = "*/*"
+    header["User-Agent"] = "Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:17.0) Gecko/17.0 Firefox/17.0"
+    header["Accept-Language"] = "zh-CN,en-US;q=0.5"
+    header["Accept-Encoding"] = "deflate"
+    header["Cache-Control"] = "no-cache"
+    局_结果 = http提交请求("get","http://ok963963ok.synology.me/Yabe/YabeVpn.php?Device="& C_帐密[0] &"&OnOff=false","","utf-8",header)
+    //traceprint("http://ok963963ok.synology.me/Yabe/YabeVpn.php?Device="& C_帐密[0] &"&OnOff=True")
+    traceprint(局_结果)
+    if(strfind(局_结果,"Fail") > -1)
+        return false
+    else
+        return true
+    end
+    
+end
+
+
 
 function Web_取订单资料(参_国家)
-    if(Web_中国回报(参_国家))
+    if(Web_中国回报(参_国家)) // 中國直接回報中國異常
         return false
     end
+    if(参_国家 != "臺灣") // 不等於臺灣必須先取得VPN權限
+        if(Web_取VPN权限())
+            Web_取订单资料_单纯取资料(参_国家)
+        else
+            if(arrayfindkey(C_待送国家,"臺灣")>-1)
+                staticsettext("状态","等待VPN權限(先發臺灣單)")
+                Web_取订单资料_单纯取资料("臺灣")
+                return true
+            else
+                staticsettext("状态","等待VPN權限(無臺灣單)")
+                sleep(5000)
+                return false
+            end          
+        end
+        
+    end
+    return Web_取订单资料_单纯取资料(参_国家)
+end
+
+function Web_取订单资料_单纯取资料(参_国家)
     var 局_Code = http获取页面源码(Cw_国家网址[参_国家],"utf-8") //页面原始码
     //设置剪切板(局_Code)
     var 局_ID = 正则子表达式匹配(局_Code,"<p id=\"para\" style=\"padding:5px 0px 0px 0px;\">([a-zA-Z0-9\\._]+)",false,true)
@@ -31,6 +88,8 @@ function Web_取订单资料(参_国家)
         Sql写订单(局_ID[0],局_资料)
         return true
     end
+    staticsettext("订单资料","")//清空顯示狀態
+    Web_置VPN解锁()
     return false
 end
 
@@ -73,7 +132,11 @@ function Web_取待送国家() //取有多少資料可以送
     if(strfind(tt,"發完")>-1 || 读文档() != "")
         if(strfind(tt,"發完")>-1 )
             文件写配置("待發",C_帐密[0],"無訂單",C_配置路径)
+            staticsettext("订单资料","")//清空顯示狀態
+            staticsettext("状态","")//清空顯示狀態
+            Web_置VPN解锁()
         end
+        
         return 
     elseif(strfind(tt,"登入會員")> -1 )// 已经被登出了
         Sys_错误停止("網站異常登出")
@@ -90,7 +153,6 @@ function Web_取待送国家() //取有多少資料可以送
     end
     traceprint("目前待發送國家有" & 局_讯息)
     文件写配置("待發",C_帐密[0],局_讯息,C_配置路径)
-    
     return 局_讯息
 end
 

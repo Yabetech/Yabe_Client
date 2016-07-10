@@ -4,11 +4,7 @@ function yes_is已处理()
     var 局_内容 = a.ReadAllTextUTF8(Cy_OrderPath)
     if(strfind(局_内容,"已處理")>-1)
         var 局_Data = stringtoarray(局_内容)
-        traceprint(Cw_国家网址[局_Data["Country"]])
-        
         webgo("浏览器0",Cw_国家网址[局_Data["Country"]])
-        sleep(1000)
-        
         for(var i = 0; i < 15; i++)
             
             staticsettext("状态","跳轉網頁" & cstring(i))

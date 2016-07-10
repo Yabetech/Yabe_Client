@@ -3,7 +3,7 @@
 end
 
 function AutoReadList(参_路径)
-    var 局_内容 = filereadex(参_路径),局_清单数组 = array()
+    var 局_内容 = filereadex(参_路径),局_清单数组 = array(),局_名称
     var 局_行数 = 文件获取行数(参_路径)
     for(var i = 0; i < 局_行数; i++)
         var 局_当前行内容 = 文件读指定行(参_路径,i)
@@ -11,14 +11,20 @@ function AutoReadList(参_路径)
             return false
         end
         traceprint(局_当前行内容)
+        
         if(strfind(局_当前行内容,"http")>-1)
             网页跳转("浏览器0",局_当前行内容)
         else
             网页跳转("浏览器0", "http://deve.yabeline.tw/Stickers_Data.php?Number=" & 局_当前行内容)
         end
+        while(局_名称 == 网页元素获取("浏览器0","text","tag:DIV&index:14"))
+            traceprint("等待跳轉完成")
+            sleep(100)
+        end
         if(等待元素出现("tag:BUTTON&txt:加入購物車","text","加入購物車",10))
+            局_名称 = 网页元素获取("浏览器0","text","tag:DIV&index:14")
             网页元素点击("浏览器0","tag:BUTTON&txt:加入購物車")
-            sleep(2000)
+            sleep(500)
         end
         
     end

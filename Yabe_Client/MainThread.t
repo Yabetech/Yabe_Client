@@ -4,7 +4,7 @@
     文件覆盖内容(Cy_OrderPath,"",2)
     while(true)
         //偵測是否已處理，日則選擇並回報，如果档案已处理或者空且待送国家>0就取订单
-        //traceprint("待送数量:" & arraysize(C_待送国家))
+        AppCarshCheck()
         if(arraysize(C_待送国家) > 0 && 读文档() == "" )  //读文档() == ""代表沒訂單
             var 局_Key
             arraygetat(C_待送国家,0,null,局_Key)
@@ -16,6 +16,19 @@
             关闭模拟器() // 这里会关闭模拟器，并关闭自身
         end
         sleep(间隔时间(局_处理订单))
+    end
+end
+
+function AppCarshCheck()
+    if(checkgetstate("不检测App崩溃"))
+        return false
+    end
+    var 局_Path = C_个别资料夹 & "Running.txt"
+    var 局_上次运行时间 = filereadex(局_Path)
+    if(时间间隔("s",局_上次运行时间,当前时间())>30)
+        异常推播("App疑似疑似崩潰，請人工處理")
+        文件覆盖内容(局_Path,"") //清空避免下次再次讀到
+        启动停止_点击()
     end
 end
 
