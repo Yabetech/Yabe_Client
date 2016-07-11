@@ -1,7 +1,7 @@
 ﻿function 主线程()
     // todo
     filewriteini("Action",C_帐密[0],"運行",C_配置路径)
-    文件覆盖内容(Cy_OrderPath,"",2)
+    Sqlite_写订单("")
     while(true)
         //偵測是否已處理，日則選擇並回報，如果档案已处理或者空且待送国家>0就取订单
         AppCarshCheck()

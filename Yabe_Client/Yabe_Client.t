@@ -32,6 +32,8 @@ var C_Noxshare
 结束
 
 function 读文档()
+    
+    return Sqlite_读订单()
     if(!fileexist(Cy_OrderPath))
         文件覆盖内容(Cy_OrderPath,"",2)
     end
@@ -113,7 +115,7 @@ function Web_点选Boss(content,参_讯息="")
         end
         网页元素点击("浏览器0","tag:INPUT&value:Boss")
         //todo 要等頁面跳轉完
-        文件覆盖内容(Cy_OrderPath,"",2)
+        Sqlite_写订单("")
         if(isarray(参_讯息))
             Sql写回报(参_讯息["id"],content,参_讯息["Remark"])
         end
@@ -202,7 +204,9 @@ end
 
 
 功能 按钮2_点击()
-    Web_取VPN权限()
+    var 局_ = Web_取订单资料_单纯取资料("日本")
+    //Sqlite_写订单(局_)
+    traceprint(Sqlite_读订单())
     return
     //这里添加你要执行的代码
     //traceprint(网页元素选择("浏览器0","補送成功 - Try_again_Ok","tag:SELECT&name:Status&index:0"))
@@ -279,7 +283,7 @@ end
     arraypush(局_资料,"未接收","Status")
     arraypush(局_资料,editgettext("Price"),"Price")
     arraypush(局_资料,"","Message")
-    文件覆盖内容(Cy_OrderPath,局_资料,2)
+    Sqlite_写订单(局_资料)
     //messagebox(BBY_回报贴图资讯(C_帐密[0],editgettext("ID"),editgettext("Web"),editgettext("Country"),editgettext("Error"),true)) //仿造訂單
     // traceprint(Web_取待送国家())
 结束

@@ -1,7 +1,7 @@
 ﻿
 function yes_is已处理()
     var a = com("MSL.File"),局_跳转失败 = true
-    var 局_内容 = a.ReadAllTextUTF8(Cy_OrderPath)
+    var 局_内容 = Sqlite_读订单()
     if(strfind(局_内容,"已處理")>-1)
         var 局_Data = stringtoarray(局_内容)
         webgo("浏览器0",Cw_国家网址[局_Data["Country"]])
@@ -33,7 +33,8 @@ function yes_is已处理()
 end
 
 function yes_写订单(参_资料)
-    文件写配置("Order",C_帐密[0] & "_ID",参_资料,Cy_OrderPath)
+    Sqlite_写订单(参_资料)
+    //文件写配置("Order",C_帐密[0] & "_ID",参_资料,Cy_OrderPath)
 end
 
 function yes_关闭模拟器()

@@ -83,7 +83,7 @@ function Web_取订单资料_单纯取资料(参_国家)
         arraypush(局_资料,"未接收","Status")
         arraypush(局_资料,局_价格["0"],"Price")
         arraypush(局_资料,"","Message")
-        文件覆盖内容(Cy_OrderPath,局_资料,2)
+        Sqlite_写订单(局_资料)
         staticsettext("订单资料",数组转资讯(局_资料))
         Sql写订单(局_ID[0],局_资料)
         return true
@@ -171,6 +171,44 @@ function Sql写回报(参_ID,参_讯息,参_备注="")
     var 局_数组 = array()
     设置剪切板(strformat("Update `log` set id='%s',處理結果='%s',處理時間=datetime('now','localtime'),備註='%s' where id='%s' and 處理結果 is null and 處理時間 is null",参_ID,参_讯息,参_备注,参_ID))
     sqlitesqlarray(C_DB_Path,strformat("Update `log` set id='%s',處理結果='%s',處理時間=datetime('now','localtime'),備註='%s' where id='%s' and 處理結果 is null and 處理時間 is null",参_ID,参_讯息,参_备注,参_ID),局_数组)
+end
+
+function Sqlite_读订单()
+    var 局_数组 = array()
+    
+    if(sqlitesqlarray(C_DB_OrderPath,"SELECT Data FROM `OrderData`",局_数组))
+        if(arraysize(局_数组)>0 && 局_数组!=null)
+            var 局_结果 = aes解密(局_数组[0]["Data"],"123")
+            return 局_结果
+        end
+    end
+    return ""
+end
+
+function Sqlite_写订单(参_Data)
+    var 局_数组 = array(),局_写入=""
+    if(isarray(参_Data))
+        局_写入 = arraytostring(参_Data)
+        局_写入 = aes加密(局_写入,"123")
+    else
+        局_写入 = 参_Data
+    end
+    if(局_写入!="")
+        
+        if(sqlitesqlarray(C_DB_OrderPath,"SELECT COUNT() FROM [OrderData] LIMIT 500",局_数组))
+            if(局_数组[0]["COUNT()"] == 0)
+                // 设置剪切板("Insert into `OrderData` (Data) values ('%s')")
+                sqlitesqlarray(C_DB_OrderPath,"Insert into `OrderData` (Data) values ('"& 局_写入 &"')",局_数组)
+                return ""
+            end
+        end
+    end
+    设置剪切板("Update `OrderData` Set Data='" & 局_写入 & "'")
+    if(sqlitesqlarray(C_DB_OrderPath,"Update `OrderData` Set Data='" & 局_写入 & "'",局_数组))
+        return true
+        
+    end
+    return ""
 end
 
 function 数组转资讯(参_数组)

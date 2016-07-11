@@ -11,3 +11,4 @@ var C_运作路径  //C_Noxshare & C_帐密[0] & "Run.txt"
 var C_个别资料夹
 
 var C_DB_Path
+var C_DB_OrderPath

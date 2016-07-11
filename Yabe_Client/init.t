@@ -20,14 +20,17 @@ function initSqlPath() // 初始化Sqlite 路徑
     var 局_路径 = C_Noxshare & C_帐密[0] & "\\",局_数组
     if(!fileexist(局_路径))
         foldercreate(局_路径)
-        
     end
     C_DB_Path = 局_路径& C_帐密[0] & ".db"
     sqlitesqlarray(C_DB_Path,"SELECT name FROM sqlite_master WHERE type='table'",局_数组)
     if(!局_数组)
         sqlitesqlarray(C_DB_Path,"create table if not exists `log` (id varchar(50),訂單資料 varchar(50),接收時間 datetime,處理結果 varchar(50),處理時間 datetime,備註 varchar(10))",局_数组)
     end
-    
+    C_DB_OrderPath = C_Noxshare & C_帐密[0] & "\\" & C_帐密[0] & "Order.db"
+    sqlitesqlarray(C_DB_OrderPath,"SELECT name FROM sqlite_master WHERE type='table'",局_数组)
+    if(!局_数组)
+        sqlitesqlarray(C_DB_OrderPath,"create table if not exists `OrderData` (Data varchar(50))",局_数组)
+    end
     
 end
 
