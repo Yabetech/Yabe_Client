@@ -16,6 +16,7 @@ function yes_is已处理()
             sleep(1000)
         end
         if(局_跳转失败)//todo 設定回報
+            messagebox("跳轉網頁失敗")
             return false
         end
         if(!Web_资料符合())
