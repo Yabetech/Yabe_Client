@@ -26,10 +26,21 @@ function yes_is已处理()
         if(Web_取订单资料(局_Data["Country"]))//再次取同一個國家看看
             traceprint("有相同國家訂單")
         end
+        yes_订单数量检测()
         Web_取待送国家()
         return true
     end
     return false
+end
+
+function yes_订单数量检测()
+    C_订单数量 = C_订单数量 +1
+    if(C_订单数量>=30)
+        yes_关闭模拟器(false) // todo 写重开记录
+        C_订单数量 = 0
+    end
+    
+    
 end
 
 function yes_写订单(参_资料)
@@ -37,10 +48,12 @@ function yes_写订单(参_资料)
     //文件写配置("Order",C_帐密[0] & "_ID",参_资料,Cy_OrderPath)
 end
 
-function yes_关闭模拟器()
+function yes_关闭模拟器(参_是否退出 = true)
     var 局_Nox路径 = filereadini("Path","夜神路徑",C_配置路径)
     var 局_命令 = strformat("%s -clone:Nox_%s -quit" ,局_Nox路径,C_帐密["id"])
     traceprint(局_命令)
     cmd(局_命令,false)
-    退出()
+    if(参_是否退出)
+        退出()
+    end
 end

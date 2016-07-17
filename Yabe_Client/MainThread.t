@@ -25,9 +25,10 @@ function AppCarshCheck()
     end
     var 局_Path = C_个别资料夹 & "Running.txt"
     var 局_上次运行时间 = filereadex(局_Path)
-    if(时间间隔("s",局_上次运行时间,当前时间())>30)
+    if(时间间隔("s",局_上次运行时间,当前时间())>120)
         异常推播("App疑似疑似崩潰，請人工處理")
         文件覆盖内容(局_Path,"") //清空避免下次再次讀到
+        //关闭模拟器()
         启动停止_点击()
     end
 end

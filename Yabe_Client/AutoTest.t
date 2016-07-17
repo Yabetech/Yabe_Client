@@ -3,6 +3,19 @@
 end
 
 function AutoReadList(参_路径)
+    var 局_ID清单 = array()
+    if(strfind(editgettext("ID"),",")>0)
+        strsplit(editgettext("ID"),",",局_ID清单)
+    else
+        局_ID清单[0] = editgettext("ID")
+    end
+    for(var i = 0; i < arraysize(局_ID清单); i++)
+        自动下单单元(参_路径,局_ID清单[i])
+    end
+    
+end
+
+function 自动下单单元(参_路径,参_ID)
     var 局_内容 = filereadex(参_路径),局_清单数组 = array(),局_名称
     var 局_行数 = 文件获取行数(参_路径)
     for(var i = 0; i < 局_行数; i++)
@@ -30,10 +43,11 @@ function AutoReadList(参_路径)
     end
     网页跳转("浏览器0","http://deve.yabeline.tw/Shopping_Cart.php")
     等待元素出现("class:form-control btn btn-success&txt:前往結帳","text","前往結帳")
-    Auto_SetLineId(editgettext("ID"))
+    Auto_SetLineId(参_ID)
     网页元素点击("浏览器0","class:form-control btn btn-success&txt:前往結帳")
     等待元素出现("txt:資料正確，確定結帳","text","資料正確，確定結帳")
     网页元素点击("浏览器0","class:btn btn-success btn-lg btn-block")
+    等待元素出现("tag:BUTTON&type:button","text","發圖進度")
     
 end
 

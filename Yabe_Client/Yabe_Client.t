@@ -47,6 +47,10 @@ function Sys_错误停止(参_错误)
     filewriteini("Action",C_帐密[0],"停止:" & 参_错误,C_配置路径)
 end
 
+function Sys_置讯息(参_讯息)
+    filewriteini("Action",C_帐密[0], 参_讯息,C_配置路径)
+end
+
 function 自动登入(参_开始=false)
     while(true)
         
@@ -111,7 +115,7 @@ function Web_点选Boss(content,参_讯息="")
     if(网页元素选择("浏览器0",content,"tag:SELECT&name:Status&index:0"))
         
         if(C_调试)
-            messagebox("Boss",C_帐密[0])
+            // messagebox("Boss",C_帐密[0])
         end
         网页元素点击("浏览器0","tag:INPUT&value:Boss")
         //todo 要等頁面跳轉完
@@ -204,7 +208,7 @@ end
 
 
 功能 按钮2_点击()
-    var 局_ = Web_取订单资料_单纯取资料("日本")
+    //var 局_ = Web_取订单资料_单纯取资料("日本")
     //Sqlite_写订单(局_)
     traceprint(Sqlite_读订单())
     return
@@ -297,7 +301,8 @@ end
         文件覆盖内容(C_运作路径,"Run")
         主线程 = threadbegin("主线程","")
     else
-        文件覆盖内容(C_运作路径,"Stop")
+        文件覆盖内容(C_运作路径,"Stop") //让模拟器App可以停止
+        Sys_置讯息("停止")
         buttonsettext("启动停止","啟動")
         threadclose(主线程)
     end

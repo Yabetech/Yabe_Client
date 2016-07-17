@@ -26,7 +26,7 @@ function Web_置VPN解锁()
     header["Cache-Control"] = "no-cache"
     局_结果 = http提交请求("get","http://ok963963ok.synology.me/Yabe/YabeVpn.php?Device="& C_帐密[0] &"&OnOff=false","","utf-8",header)
     //traceprint("http://ok963963ok.synology.me/Yabe/YabeVpn.php?Device="& C_帐密[0] &"&OnOff=True")
-    traceprint(局_结果)
+    // traceprint(局_结果)
     if(strfind(局_结果,"Fail") > -1)
         return false
     else
@@ -43,7 +43,7 @@ function Web_取订单资料(参_国家)
     end
     if(参_国家 != "臺灣") // 不等於臺灣必須先取得VPN權限
         if(Web_取VPN权限())
-            Web_取订单资料_单纯取资料(参_国家)
+            return Web_取订单资料_单纯取资料(参_国家)
         else
             if(arrayfindkey(C_待送国家,"臺灣")>-1)
                 staticsettext("状态","等待VPN權限(先發臺灣單)")
@@ -57,7 +57,7 @@ function Web_取订单资料(参_国家)
         end
         
     end
-    return Web_取订单资料_单纯取资料(参_国家)
+    return Web_取订单资料_单纯取资料(参_国家) //取臺灣的
 end
 
 function Web_取订单资料_单纯取资料(参_国家)
@@ -72,9 +72,8 @@ function Web_取订单资料_单纯取资料(参_国家)
     traceprint(strformat("局_ID:%s 局_LineWeb:%s",局_ID,局_LineWeb))
     var 局_资料=array()
     var aa = 读文档()
-    traceprint(aa)
     if(局_ID[0] != null && 局_LineWeb != null && (strfind(aa,"已處理") == -1 || aa == "" ))
-        arraypush(局_资料,C_帐密[0],"Login")
+        //arraypush(局_资料,C_帐密[0],"Login")
         arraypush(局_资料,局_ID[0],"ID")
         arraypush(局_资料,局_LineWeb,"LineWeb")
         arraypush(局_资料,参_国家,"Country")
@@ -85,6 +84,7 @@ function Web_取订单资料_单纯取资料(参_国家)
         arraypush(局_资料,"","Message")
         Sqlite_写订单(局_资料)
         staticsettext("订单资料",数组转资讯(局_资料))
+        staticsettext("状态","等待貼圖發送")
         Sql写订单(局_ID[0],局_资料)
         return true
     end
@@ -164,32 +164,50 @@ end
 
 function Sql写订单(参_ID,参_讯息)
     var 局_数组 = array()
-    sqlitesqlarray(C_DB_Path,strformat("insert into log (id,訂單資料,接收時間) values ('%s','%s',datetime('now','localtime'))",参_ID,参_讯息),局_数组)
+    sqlitesqlarray(C_DB_Path,strformat("insert into log (id,訂單資料,接收時間) values ('%s','%s',datetime('now','localtime'))",参_ID,数组转资讯(参_讯息)),局_数组)
 end
 
 function Sql写回报(参_ID,参_讯息,参_备注="")
     var 局_数组 = array()
-    设置剪切板(strformat("Update `log` set id='%s',處理結果='%s',處理時間=datetime('now','localtime'),備註='%s' where id='%s' and 處理結果 is null and 處理時間 is null",参_ID,参_讯息,参_备注,参_ID))
+    //设置剪切板(strformat("Update `log` set id='%s',處理結果='%s',處理時間=datetime('now','localtime'),備註='%s' where id='%s' and 處理結果 is null and 處理時間 is null",参_ID,参_讯息,参_备注,参_ID))
     sqlitesqlarray(C_DB_Path,strformat("Update `log` set id='%s',處理結果='%s',處理時間=datetime('now','localtime'),備註='%s' where id='%s' and 處理結果 is null and 處理時間 is null",参_ID,参_讯息,参_备注,参_ID),局_数组)
 end
 
 function Sqlite_读订单()
-    var 局_数组 = array()
+    var 局_数组 = array(),局_资讯分割 = array()
     
     if(sqlitesqlarray(C_DB_OrderPath,"SELECT Data FROM `OrderData`",局_数组))
         if(arraysize(局_数组)>0 && 局_数组!=null)
-            var 局_结果 = aes解密(局_数组[0]["Data"],"123")
-            return 局_结果
+            var 局_结果 = 局_数组[0]["Data"]
+            if(局_数组[0]["Data"] == "")
+                return ""
+            end
+            strsplit(局_数组[0]["Data"]," | ",局_资讯分割)
+            return Sqlite_内部资讯分割(局_资讯分割)
         end
     end
     return ""
 end
 
+function Sqlite_内部资讯分割(参_数组)
+    var 局_暂存分割 = array(),局_返回分割 = array()
+    
+    for(var i = 0; i < arraysize(参_数组); i++)
+        if(参_数组[i] == "")
+            break
+        end
+        if(strsplit(参_数组[i],"：",局_暂存分割))
+            arraypush(局_返回分割,局_暂存分割[1],局_暂存分割[0])
+        end
+    end
+    return 局_返回分割
+end
+
 function Sqlite_写订单(参_Data)
     var 局_数组 = array(),局_写入=""
     if(isarray(参_Data))
-        局_写入 = arraytostring(参_Data)
-        局_写入 = aes加密(局_写入,"123")
+        局_写入 = 数组转资讯(参_Data)
+        //局_写入 = aes加密(局_写入,"123")
     else
         局_写入 = 参_Data
     end
@@ -203,7 +221,7 @@ function Sqlite_写订单(参_Data)
             end
         end
     end
-    设置剪切板("Update `OrderData` Set Data='" & 局_写入 & "'")
+    //设置剪切板("Update `OrderData` Set Data='" & 局_写入 & "'")
     if(sqlitesqlarray(C_DB_OrderPath,"Update `OrderData` Set Data='" & 局_写入 & "'",局_数组))
         return true
         

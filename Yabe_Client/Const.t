@@ -12,3 +12,5 @@ var C_个别资料夹
 
 var C_DB_Path
 var C_DB_OrderPath
+
+var C_订单数量 = 0
