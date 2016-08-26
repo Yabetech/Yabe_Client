@@ -1,32 +1,37 @@
 ﻿var C_帐密 = array()
 var C_国家
-var C_调试 = true
-var C_Web = "http://deve.yabeline.tw/Member2.php"
-var 主线程
-
+var C_调试 = false
+var C_Web
+var C_网域
+var 主线程,监测线程
 var C_Noxshare
 功能 Yabe_Client_初始化()
-    
     var 局_开始 = false
     var 局_参数 = 获取参数ex()
     if(arraysize(局_参数)>1)
         C_帐密[0] = 局_参数[1]
         C_帐密[1] = 局_参数[2]
         C_帐密["id"] = 局_参数[3]
-        窗口最小化(窗口获取自我句柄())
+        窗口设置位置(窗口获取自我句柄(),(局_参数[3]-1)*480,538)
         局_开始 = true
     else
-        C_帐密[0] = "march911"
+        C_帐密[0] = "march910"
         C_帐密[1] = "123"
-        C_帐密["id"] = 3
+        C_帐密["id"] = 1
     end
     if(!C_调试)
         C_Web = "http://yabeline.tw/Member2.php"
+        C_网域 = "http://yabeline.tw/"
     end
-    
     threadbegin("自动登入",局_开始)
     init_Main()
-    
+    var 局_控件 = array("按钮0","按钮2","Test")
+    var 局_Value
+    for(var i = 0; i < arraysize(局_控件); i++)
+        arraygetat(局_控件,i,局_Value,null)
+        controlshow(局_控件[i],false)
+        
+    end
     //BBY_Reg()
     
 结束
@@ -52,12 +57,14 @@ function Sys_置讯息(参_讯息)
 end
 
 function 自动登入(参_开始=false)
+    
     while(true)
         
         webgo("浏览器0",C_Web)
         while(!网页加载("浏览器0"))
             sleep(100)
         end
+        sleep(3000)
         网页元素输入("浏览器0",C_帐密[0],"name:Line_ID")
         网页元素输入("浏览器0", C_帐密[1],"name:password")
         网页元素点击("浏览器0","class:btn btn-success")
@@ -101,49 +108,73 @@ function BBY_置回调()
     end
 end
 
-//登陆成功后,响应云消息的回调函数,一个进程只能设置一个 
-function bby_callbackloginW(type,arg) 
-    var content = addressvalue(arg,"wchar *") 
-    traceprint(content) 
-    if(strfind(content,"Boss") > -1)
-        Web_点选Boss(content)
-    end
-end
-
-function Web_点选Boss(content,参_讯息="")
-    
+function Web_点选Boss(content,参_讯息="")//訊息為空 是中國訂單
+    var 局_回报成功 = false
+    wlog("Web_點選Boss","準備處理Boss")
     if(网页元素选择("浏览器0",content,"tag:SELECT&name:Status&index:0"))
-        
-        if(C_调试)
-            // messagebox("Boss",C_帐密[0])
-        end
+        sleep(1000)
         网页元素点击("浏览器0","tag:INPUT&value:Boss")
+        if(参_讯息 != "")
+            for(var i = 0; i < 5; i++)
+                sleep(3000)
+                局_回报成功 = Web_is回报完成(参_讯息) //詢問服務器是否回報成功
+                if(局_回报成功)
+                    break
+                end
+            end
+        else
+            局_回报成功 = true
+        end
+        
+        if(!局_回报成功 && 参_讯息 != "") //非中國訂單且回報失敗
+            异常推播("回報失敗")
+            Sys_错误停止("回報失敗")
+            messagebox("回報失敗 準備點選Boss的訊息為" & 参_讯息,C_帐密[0])
+            启动停止_点击()
+            return false
+        elseif(局_回报成功)
+            wlog("Web_點選Boss","確認訂單回報成功,資料一致")
+        end
+        if(strfind(参_讯息,"異常A")> -1 || strfind(参_讯息,"異常B")> -1 || strfind(参_讯息,"異常C")> -1 || strfind(参_讯息,"異常Z")> -1)
+            异常推播(数组转资讯(参_讯息))
+        end
         //todo 要等頁面跳轉完
         Sqlite_写订单("")
+        while(Sqlite_读订单() != "") //如果寫入為空，但是讀出又不為為空
+            wlog("Web_點選Boss","Sqlite清空失敗，準備重試")
+            sleep(200)
+            Sqlite_写订单("")
+            sleep(200)
+        end
         if(isarray(参_讯息))
             Sql写回报(参_讯息["id"],content,参_讯息["Remark"])
         end
+        return true
+    else
+        wlog("Web_點選Boss","選擇回報狀態失敗",false)
     end
     sleep(5000)
+    return false
 end
 
-function Web_资料符合() //订单资料 和 页面资料是否符合
+function Web_资料符合(参_国家网址) //订单资料 和 页面资料是否符合
+    wlog("Web_資料符合","準備比對資料是否符合",false)
+    sleep(500)
     var 局_网址 = 网页获取超链接("浏览器0")
+    if(参_国家网址 != 局_网址)
+        messagebox("應轉向網址:" & 参_国家网址 & "\r\n 當前網址:" & 局_网址,"異常網址")
+    end
     var 局_贴图网址 =  Web_取订单资料_取LineWeb(http获取页面源码(局_网址,"utf-8"))
     var 局_数组资料=array(),局_贴图网址2,局_资料 = 读文档()
     局_数组资料 = stringtoarray(局_资料)
-    var 局_ID = 网页元素获取("浏览器0","value","tag:INPUT&name:Line_ID&type:text&index:2")
+    var 局_ID = 网页元素获取("浏览器0","value","tag:INPUT&type:text&index:2&class:form-control")
     // var 局_贴图网址 = 网页元素获取("浏览器0","value","tag:INPUT&index:8") 
     var 局_异常状况 = 网页元素获取("浏览器0","text","tag:FONT&index:2")
     局_异常状况 = strreplace(局_异常状况,"【","")
     局_异常状况 = strreplace(局_异常状况,"】","")
     
-    //strsplit(局_贴图网址,"　",局_贴图网址2)
-    // traceprint(局_ID != 局_数组资料["ID"])
-    // traceprint(局_贴图网址2["0"] != 局_数组资料["LineWeb"] )
-    //traceprint(局_异常状况 != 局_数组资料["Error"])
-    //traceprint(局_数组资料["Error"] == null)
-    if(局_ID != 局_数组资料["ID"] || 局_贴图网址 != 局_数组资料["LineWeb"])
+    if(!Web_比对页面id和网址(局_数组资料["ID"],局_数组资料["LineWeb"]))
+        messagebox("發圖結果與訂單結果不符合，網頁ID:" & 局_ID & "   訂單ID:" & 局_数组资料["ID"] & "  網頁網址:" & 局_贴图网址 & "   訂單網址:" & 局_数组资料["LineWeb"],C_帐密["0"])
         Sys_错误停止("訂單資料與網頁上不符合")
         return false
     end
@@ -185,13 +216,42 @@ end
 
 
 功能 按钮0_点击()
-    Auto_SetLineId("Auto")
+    
 结束
 
-
+var C_更新检测时间
+function 逍遥_更新Apk()
+    if(!C_更新检测时间  || 时间间隔("s",当前时间(),C_更新检测时间) < -10)
+        C_更新检测时间 = 当前时间()
+        var 局_最新版本号 = 系统获取系统路径(4) & "\\Downloads\\逍遙安卓下載\\Update\\Version.txt"
+        var 局_当前版本号 = C_个别资料夹 & "Version.txt"
+        if(!fileexist(局_当前版本号))
+            return false //等他寫完資料
+        end
+        if(Sqlite_读订单() == "")
+            if(filereadex(局_最新版本号)> filereadex(局_当前版本号))
+                xy_卸载apk("MEmu_" & C_帐密["id"],"com.yabe")
+                xy_安装apk("MEmu_" & C_帐密["id"],"C:\\Users\\Lu\\Downloads\\逍遙安卓下載\\Update\\YabeRobot.apk")
+                sleep(2000)
+                xy_运行app("MEmu_" & C_帐密["id"],"com.yabe","com.yabe.UserActivity")
+                sleep(2000)
+            end
+        end
+    end
+    
+    
+    
+end
 
 
 功能 按钮1_点击()
+    var 局_最后回报 = http获取页面源码(C_网域 & "LastStatus.php?Device=" & "march910","utf-8")
+    var 局_数组 = json转数组(局_最后回报)
+    局_数组[0]["Line_ID"] = url解码(局_数组[0]["Line_ID"],"utf-8")
+    traceprint(局_数组[0]["Line_ID"] )
+    //Web_取订单资料_单纯取资料("泰國")
+    // var 局_ID = 正则子表达式匹配(txt,"<p id=\"para_2\" style=\"padding:5px 0px 0px 0px;\">([a-zA-Z0-9\\._-\\x{4e00}-\\x{9fa5}]+)",false,true,true)
+    // traceprint(局_ID)
     //这里添加你要执行的代码
     //    变量 header = 数组()
     //    header["Accept"] = "*/*"
@@ -201,7 +261,11 @@ end
     //    header["Cache-Control"] = "no-cache"
     //    变量 body = http提交请求("get","http://140.130.20.180/test.php?age=get","","utf-8",header)
     //    traceprint(body)
-    Web_取待送国家()
+    return
+    var s = "var a = document.getElementsByName(\"Line_ID\");return a[1].value;"
+    traceprint(网页执行js("浏览器0",s))
+    
+    
     return
     获取页面资讯()
 结束
@@ -272,7 +336,6 @@ end
     
     // threadbegin("yes_is已处理","")
     //主线程 = threadbegin("主线程","")
-    //Web_取订单资料("臺灣")
     //    Web_取待送国家()
     //    return
     //设置剪切板(http获取页面源码("http://deve.yabeline.tw/Friend_Stickers_Send.php?Country=ja","utf-8"))
@@ -296,15 +359,19 @@ end
 
 
 功能 启动停止_点击()
+    
     if(buttongettext("启动停止") == "啟動")
         buttonsettext("启动停止","停止")
         文件覆盖内容(C_运作路径,"Run")
         主线程 = threadbegin("主线程","")
+        监测线程 = threadbegin("AppCarshCheckThread","")
+        
     else
         文件覆盖内容(C_运作路径,"Stop") //让模拟器App可以停止
         Sys_置讯息("停止")
         buttonsettext("启动停止","啟動")
         threadclose(主线程)
+        threadclose(监测线程)
     end
     
 结束
@@ -313,6 +380,7 @@ end
 //点击关闭_执行操作
 功能 Yabe_Client_关闭()
     threadclose(主线程)
+    threadclose(监测线程)
     控件关闭子窗口("Yabe_Client",0)
     退出()
 结束
@@ -338,4 +406,5 @@ end
     end
     
 结束
+
 

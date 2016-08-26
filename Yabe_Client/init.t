@@ -1,22 +1,39 @@
 ﻿
 
 function init_Main()
-    init_夜神资料夹()
-    init_开启模拟器()
+    init_逍遥资料夹()
+    //init_开启模拟器() 已经交给Center 去处理
     init_国家名称()
     init_国家网址()
     windowsetcaption(windowgetmyhwnd(),C_帐密[0])
     init_运作路径()
-    initSqlPath()
+    init_SqlPath()
     init_个别资料夹()
     init_Running()
+    init_归零订单数量()
+    init_LogFold()
+    C_回报失败次数 = 0
+end
+
+function init_LogFold()
+    var 局_路径 = 系统获取进程路径() & "Log\\"
+    if(!fileexist(局_路径))
+        文件夹创建(局_路径)
+    end
+    if(!fileexist(局_路径 & C_帐密[0]))
+        foldercreate(局_路径 & C_帐密[0])
+    end
+end
+
+function init_归零订单数量()
+    filewriteini("訂單數",C_帐密[0],"0",C_配置路径)
 end
 
 function init_Running()
     文件覆盖内容(C_个别资料夹 & "Running.txt",指定时间("s",-30,当前时间()))
 end
 
-function initSqlPath() // 初始化Sqlite 路徑
+function init_SqlPath() // 初始化Sqlite 路徑
     var 局_路径 = C_Noxshare & C_帐密[0] & "\\",局_数组
     if(!fileexist(局_路径))
         foldercreate(局_路径)
@@ -47,20 +64,13 @@ function init_运作路径()
     end
 end
 
-function init_夜神资料夹()
-    C_Noxshare = 系统获取系统路径(4) & "Nox_share\\Other\\"
+function init_逍遥资料夹()
+    C_Noxshare = 系统获取系统路径(4) & "Downloads\\逍遙安卓下載\\"
     Cy_夜神路径 = filereadini("Path","夜神路徑",C_配置路径)
     //Cy_OrderPath = C_Noxshare & "Cy_OrderPath.ini"
     Cy_OrderPath = C_Noxshare & C_帐密[0] & "Order.txt"
 end
 
-
-
-function init_开启模拟器()
-    if(!C_调试)
-        cmd(strformat("%s -clone %s",Cy_夜神路径,C_帐密[0]),true)
-    end
-end
 
 function init_国家名称()
     arraypush(C_国家英文,"Taiwan","臺灣")
@@ -77,20 +87,23 @@ function init_国家名称()
 end
 
 function init_国家网址()
-    arraypush(Cw_国家网址,"http://deve.yabeline.tw/Friend_Stickers_Send.php","臺灣")
-    arraypush(Cw_国家网址,"http://deve.yabeline.tw/Friend_Stickers_Send.php?Country=ja","日本")
-    arraypush(Cw_国家网址,"http://deve.yabeline.tw/Friend_Stickers_Send.php?Country=us","美國")
-    arraypush(Cw_国家网址,"http://deve.yabeline.tw/Friend_Stickers_Send.php?Country=th","泰國") //todo 補全英文
-    arraypush(Cw_国家网址,"http://deve.yabeline.tw/Friend_Stickers_Send.php?Country=id","印尼") //todo 補全英文
-    arraypush(Cw_国家网址,"http://deve.yabeline.tw/Friend_Stickers_Send.php?Country=in","印度") //todo 補全英文
-    arraypush(Cw_国家网址,"http://deve.yabeline.tw/Friend_Stickers_Send.php?Country=es","西班牙") //todo 補全英文
-    arraypush(Cw_国家网址,"http://deve.yabeline.tw/Friend_Stickers_Send.php?Country=hk","香港") //todo 補全英文
-    arraypush(Cw_国家网址,"http://deve.yabeline.tw/Friend_Stickers_Send.php?Country=ar","阿根廷") //todo 補全英文
-    arraypush(Cw_国家网址,"http://deve.yabeline.tw/Friend_Stickers_Send.php?Country=mx","墨西哥") //todo 補全英文
-    arraypush(Cw_国家网址,"http://deve.yabeline.tw/Friend_Stickers_Send.php?Country=my","馬來西亞") //todo 補全英文
-    arraypush(Cw_国家网址,"http://deve.yabeline.tw/Friend_Stickers_Send.php?Country=bs","巴西") //todo 補全英文
-    arraypush(Cw_国家网址,"http://deve.yabeline.tw/Friend_Stickers_Send.php?Country=cn","中國") //todo 補全英文
-    arraypush(Cw_国家网址,"http://deve.yabeline.tw/Friend_Stickers_Send.php?Country=kr","韓國") //todo 補全英文
+    arraypush(Cw_国家网址,C_YabeWeb & "Friend_Stickers_Send.php","臺灣")
+    arraypush(Cw_国家网址,C_YabeWeb & "Friend_Stickers_Send.php?Country=ja","日本")
+    arraypush(Cw_国家网址,C_YabeWeb & "Friend_Stickers_Send.php?Country=us","美國")
+    arraypush(Cw_国家网址,C_YabeWeb & "Friend_Stickers_Send.php?Country=de","德國")
+    arraypush(Cw_国家网址,C_YabeWeb & "Friend_Stickers_Send.php?Country=IT","義大利")
+    arraypush(Cw_国家网址,C_YabeWeb & "Friend_Stickers_Send.php?Country=fr","法國")
+    arraypush(Cw_国家网址,C_YabeWeb & "Friend_Stickers_Send.php?Country=th","泰國") //todo 補全英文
+    arraypush(Cw_国家网址,C_YabeWeb & "Friend_Stickers_Send.php?Country=id","印尼") //todo 補全英文
+    arraypush(Cw_国家网址,C_YabeWeb & "Friend_Stickers_Send.php?Country=in","印度") //todo 補全英文
+    arraypush(Cw_国家网址,C_YabeWeb & "Friend_Stickers_Send.php?Country=es","西班牙") //todo 補全英文
+    arraypush(Cw_国家网址,C_YabeWeb & "Friend_Stickers_Send.php?Country=hk","香港") //todo 補全英文
+    arraypush(Cw_国家网址,C_YabeWeb & "Friend_Stickers_Send.php?Country=ar","阿根廷") //todo 補全英文
+    arraypush(Cw_国家网址,C_YabeWeb & "Friend_Stickers_Send.php?Country=mx","墨西哥") //todo 補全英文
+    arraypush(Cw_国家网址,C_YabeWeb & "Friend_Stickers_Send.php?Country=my","馬來西亞") //todo 補全英文
+    arraypush(Cw_国家网址,C_YabeWeb & "Friend_Stickers_Send.php?Country=bs","巴西") //todo 補全英文
+    arraypush(Cw_国家网址,C_YabeWeb & "Friend_Stickers_Send.php?Country=cn","中國") //todo 補全英文
+    arraypush(Cw_国家网址,C_YabeWeb & "Friend_Stickers_Send.php?Country=kr","韓國") //todo 補全英文
     
 end
 
