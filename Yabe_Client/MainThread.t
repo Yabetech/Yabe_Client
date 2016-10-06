@@ -1,32 +1,35 @@
 ﻿function 主线程()
     // todo
     C_订单发送时间 = null
+    Global_源码开关 = false
     var 局_是否有国家=""
     filewriteini("Action",C_帐密[0],"運行",C_配置路径)
     Sqlite_写订单("")
     while(true)
         //偵測是否已處理，日則選擇並回報，如果档案已处理或者空且待送国家>0就取订单
         
-        if(arraysize(C_待送国家) > 0 && 读文档() == "" )  //读文档() == ""代表沒訂單
-            var 局_Key
-            arraygetat(C_待送国家,0,null,局_Key)
-            if(局_Key == "國外")
-                if(arraysize(C_待送国家)>1)
-                    arraygetat(C_待送国家,1,null,局_Key)
+        if(arraysize(C_待送国家) > 0)  
+            if(!fileexist(C_个别资料夹 & "發圖中.txt")) //無權限代表不能讀爾以
+                var 局_Key
+                arraygetat(C_待送国家,0,null,局_Key)
+                if(局_Key == "國外")
+                    if(arraysize(C_待送国家)>1)
+                        arraygetat(C_待送国家,1,null,局_Key)
+                    end
                 end
+                Web_取订单资料(局_Key)
             end
-            Web_取订单资料(局_Key)
+            
         end
         检测订单超时()
-        if(staticgettext("状态") != "已發送資料給APP端發圖")
-            局_是否有国家 = Web_取待送国家()
+        if(staticgettext("状态") != "已發送資料給APP端發圖" && !fileexist(C_个别资料夹 & "發圖中.txt"))
+            局_是否有国家 = Web_取待送国家("MainThread")
         end
-        
         var 局_处理订单 = yes_is已处理() //如果已经是回报订单 会返回真
-        if(重开时间() && 读文档() == "" )//重开时间到了
+        if(重开时间() && staticgettext("状态") == "目前無訂單，抓取新訂單中")//重开时间到了
             关闭模拟器() // 这里会关闭模拟器，并关闭自身
         end
-        if(局_是否有国家 == "" || staticgettext("状态") == "已發送資料給APP端發圖")
+        if(局_是否有国家 == "" || staticgettext("状态") == "已發送資料給APP端發圖" || fileexist(C_个别资料夹 & "發圖中.txy"))
             等待时间(间隔时间(局_处理订单),"等待")
         end
         
@@ -35,10 +38,47 @@
 end
 
 function AppCarshCheckThread()
+    
     while(true)
         sleep(2000)
+        
         AppCarshCheck()
+        for(var i = 0; i < 10 && Global_源码开关; i++)
+            if(i == 9)
+                wlog("AppCarshCheckThread","獲取網頁資料超時，重新開始")
+                threadclose(主线程)
+                C_重开次数++
+                if(C_重开次数>=2)
+                    wlog("AppCarshCheckThread","獲取網頁資料失敗次數過多，準備重開")
+                    退出()
+                    break
+                end
+                sleep(2000)
+                主线程 = threadbegin("主线程","")
+            end
+            if(i>5)
+                wlog("AppCarshCheckThread","獲取網頁資料超時" & i & "秒",false)
+            end
+            sleep(1000)
+        end
     end
+end
+
+function bmpToGif()
+    var dll = com("bmpToGif.imageClass"),局_文件列表 = array()
+    文件遍历(C_个别资料夹 & "訂單截圖",局_文件列表,null)
+    if(!fileexist("C:\\xampp\\htdocs\\"))
+        return
+    end
+    for(var i = 0; i < arraysize(局_文件列表); i++)
+        if(strfind(局_文件列表[i],".bmp")>-1)
+            dll.bmpToGif(C_个别资料夹 & "訂單截圖\\" & 局_文件列表[i],"C:\\xampp\\htdocs\\" & strreplace(局_文件列表[i],".bmp",".gif"))
+        end
+        
+    end
+    dll = null
+    
+    
 end
 
 function AppCarshCheck()
@@ -48,7 +88,10 @@ function AppCarshCheck()
     var 局_Path = C_个别资料夹 & "Running.txt"
     var 局_上次运行时间 = filereadex(局_Path)
     if(时间间隔("s",局_上次运行时间,当前时间())>120)
-        异常推播("其他-APP疑似崩潰，正在等待恢復")
+        if(!C_调试)
+            异常推播("其他-APP疑似崩潰，正在等待恢復")
+            局_上次运行时间 = 当前时间()
+        end
         staticsettext("状态","其他-APP疑似崩潰，正在等待恢復")
         threadsuspend(主线程)
         
@@ -68,7 +111,7 @@ function 间隔时间(参_处理完订单)
     if(参_处理完订单)
         return 1000 //如果是刚处理完订单 ， 等一秒马上在循环
     end
-    if(读文档() != "" && !参_处理完订单) //当前有订单
+    if(fileexist(C_个别资料夹 & "eread.txt")) //当前有订单 && !参_处理完订单
         return 2000
     end
     //刚处理完
@@ -76,14 +119,10 @@ function 间隔时间(参_处理完订单)
     if(局_CD == "" || 局_CD == null)
         return 5000 //如果是当前没订单预设等待5秒
     end
-    staticsettext("状态","目前無訂單，抓取新訂單中")
     return cint(局_CD*1000)
 end
 
 function 等待时间(参_时间,参_讯息)
-    if(参_时间 == 2000)
-        staticsettext("状态","已發送資料給APP端發圖")
-    end
     for(var i = 0; i < 参_时间/1000 ; i++)
         staticsettext("等待",参_讯息 & cstring((参_时间/1000)-i))
         sleep(1000)

@@ -5,11 +5,12 @@ end
 function AutoReadList(参_路径)
     buttonsettext("批量下单","下單中")
     var 局_ID清单 = array()
-    if(strfind(editgettext("ID"),",")>0)
-        strsplit(editgettext("ID"),",",局_ID清单)
-    else
-        局_ID清单[0] = editgettext("ID")
-    end
+//    if(strfind(editgettext("ID"),",")>0)
+//       
+//    else
+//        局_ID清单[0] = editgettext("ID")
+//    end
+     strsplit(filereadex("a:\\id.txt"),"\r\n",局_ID清单)
     for(var i = 0; i < arraysize(局_ID清单); i++)
         自动下单单元(参_路径,局_ID清单[i])
     end
@@ -31,6 +32,7 @@ function 自动下单单元(参_路径,参_ID)
             结算(参_ID)
         end
     end
+    return
     if(局_行数 % 10 !=0) //处理最后不是10笔一起的结算
         结算(参_ID)
     end
@@ -39,7 +41,7 @@ function 自动下单单元(参_路径,参_ID)
 end
 
 function 结算(参_ID)
-    网页跳转("浏览器0","http://deve.yabeline.tw/Shopping_Cart.php")
+    网页跳转("浏览器0","http://yabeline.tw/Shopping_Cart.php")
     等待元素出现("class:form-control btn btn-success&txt:前往結帳","text","前往結帳")
     Auto_SetLineId(参_ID)
     网页元素点击("浏览器0","class:form-control btn btn-success&txt:前往結帳")

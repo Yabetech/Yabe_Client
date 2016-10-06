@@ -1,10 +1,11 @@
 ﻿var C_帐密 = array()
 var C_国家
-var C_调试 = false
+
 var C_Web
 var C_网域
 var 主线程,监测线程
 var C_Noxshare
+var 临时线程句柄,Global_源码开关
 功能 Yabe_Client_初始化()
     var 局_开始 = false
     var 局_参数 = 获取参数ex()
@@ -12,16 +13,25 @@ var C_Noxshare
         C_帐密[0] = 局_参数[1]
         C_帐密[1] = 局_参数[2]
         C_帐密["id"] = 局_参数[3]
-        窗口设置位置(窗口获取自我句柄(),(局_参数[3]-1)*480,538)
+        
+        if(局_参数[3]<=3)
+            窗口设置位置(窗口获取自我句柄(),(局_参数[3]-1)*480,538)
+        else
+            窗口设置位置(窗口获取自我句柄(),(局_参数[3]-2)*480,538)
+        end
         局_开始 = true
     else
-        C_帐密[0] = "march910"
-        C_帐密[1] = "123"
+        C_帐密[0] = "march911"
+        C_帐密[1] = "yabe@2016"
         C_帐密["id"] = 1
+        窗口设置大小(窗口获取自我句柄(),487,617)
     end
     if(!C_调试)
         C_Web = "http://yabeline.tw/Member2.php"
         C_网域 = "http://yabeline.tw/"
+    else
+        C_Web = "http://deve.yabeline.tw/Member2.php"
+        C_网域 = "http://deve.yabeline.tw/"
     end
     threadbegin("自动登入",局_开始)
     init_Main()
@@ -36,24 +46,16 @@ var C_Noxshare
     
 结束
 
-function 读文档()
-    
-    return Sqlite_读订单()
-    if(!fileexist(Cy_OrderPath))
-        文件覆盖内容(Cy_OrderPath,"",2)
-    end
-    var a = com("MSL.File")
-    
-    var aa = a.ReadAllTextUTF8(Cy_OrderPath)
-    return aa
-end
 
 function Sys_错误停止(参_错误)
     filewriteini("Action",C_帐密[0],"停止:" & 参_错误,C_配置路径)
 end
 
-function Sys_置讯息(参_讯息)
+function Sys_置讯息(参_讯息,参_状态=false)
     filewriteini("Action",C_帐密[0], 参_讯息,C_配置路径)
+    if(参_状态)
+        staticsettext("状态",参_讯息)
+    end
 end
 
 function 自动登入(参_开始=false)
@@ -109,42 +111,49 @@ function BBY_置回调()
 end
 
 function Web_点选Boss(content,参_讯息="")//訊息為空 是中國訂單
-    var 局_回报成功 = false
+    var 局_回报成功 = false,局_清空次数 = 0
     wlog("Web_點選Boss","準備處理Boss")
     if(网页元素选择("浏览器0",content,"tag:SELECT&name:Status&index:0"))
-        sleep(1000)
+        sleep(200)
         网页元素点击("浏览器0","tag:INPUT&value:Boss")
-        if(参_讯息 != "")
-            for(var i = 0; i < 5; i++)
-                sleep(3000)
-                局_回报成功 = Web_is回报完成(参_讯息) //詢問服務器是否回報成功
-                if(局_回报成功)
-                    break
-                end
-            end
-        else
-            局_回报成功 = true
-        end
-        
-        if(!局_回报成功 && 参_讯息 != "") //非中國訂單且回報失敗
-            异常推播("回報失敗")
-            Sys_错误停止("回報失敗")
-            messagebox("回報失敗 準備點選Boss的訊息為" & 参_讯息,C_帐密[0])
-            启动停止_点击()
-            return false
-        elseif(局_回报成功)
-            wlog("Web_點選Boss","確認訂單回報成功,資料一致")
-        end
-        if(strfind(参_讯息,"異常A")> -1 || strfind(参_讯息,"異常B")> -1 || strfind(参_讯息,"異常C")> -1 || strfind(参_讯息,"異常Z")> -1)
+        //        if(参_讯息 != "")
+        //            for(var i = 0; i < 5; i++)
+        //                sleep(3000)
+        //                局_回报成功 = Web_is回报完成(参_讯息) //詢問服務器是否回報成功
+        //                if(局_回报成功)
+        //                    break
+        //                end
+        //            end
+        //        else
+        //            局_回报成功 = true
+        //        end
+        //        
+        //        if(!局_回报成功 && 参_讯息 != "") //非中國訂單且回報失敗
+        //            异常推播("回報失敗 準備點選Boss的訊息為" & 数组转资讯(参_讯息))
+        //            Sys_错误停止("回報失敗")
+        //            wlog("Web_點選Boss","回報失敗 準備點選Boss的訊息為" & 数组转资讯(参_讯息))
+        //            // messagebox("回報失敗 準備點選Boss的訊息為" & 数组转资讯(参_讯息),C_帐密[0])
+        //            启动停止_点击()
+        //            return false
+        //        elseif(局_回报成功)
+        //            wlog("Web_點選Boss","確認訂單回報成功,資料一致")
+        //        end
+        if((strfind(参_讯息,"異常A")> -1 || strfind(参_讯息,"異常B")> -1 || strfind(参_讯息,"異常C")> -1 || strfind(参_讯息,"異常Z")> -1) && !C_调试)
             异常推播(数组转资讯(参_讯息))
         end
         //todo 要等頁面跳轉完
         Sqlite_写订单("")
+        staticsettext("状态","")
         while(Sqlite_读订单() != "") //如果寫入為空，但是讀出又不為為空
+            局_清空次数 = 局_清空次数 + 1
             wlog("Web_點選Boss","Sqlite清空失敗，準備重試")
             sleep(200)
-            Sqlite_写订单("")
+            filedelete(C_DB_OrderPath)
             sleep(200)
+            if(局_清空次数>=5)
+                退出()
+            end
+            init_SqlPath()
         end
         if(isarray(参_讯息))
             Sql写回报(参_讯息["id"],content,参_讯息["Remark"])
@@ -164,9 +173,9 @@ function Web_资料符合(参_国家网址) //订单资料 和 页面资料是�
     if(参_国家网址 != 局_网址)
         messagebox("應轉向網址:" & 参_国家网址 & "\r\n 當前網址:" & 局_网址,"異常網址")
     end
-    var 局_贴图网址 =  Web_取订单资料_取LineWeb(http获取页面源码(局_网址,"utf-8"))
-    var 局_数组资料=array(),局_贴图网址2,局_资料 = 读文档()
-    局_数组资料 = stringtoarray(局_资料)
+    var 局_贴图网址 = Web_取订单资料_取LineWeb(http_获取源码(局_网址))  //http获取页面源码(局_网址,"utf-8")
+    var 局_数组资料=array(),局_贴图网址2,局_资料 = Sqlite_读订单()
+    局_数组资料 = 局_资料
     var 局_ID = 网页元素获取("浏览器0","value","tag:INPUT&type:text&index:2&class:form-control")
     // var 局_贴图网址 = 网页元素获取("浏览器0","value","tag:INPUT&index:8") 
     var 局_异常状况 = 网页元素获取("浏览器0","text","tag:FONT&index:2")
@@ -228,7 +237,7 @@ function 逍遥_更新Apk()
         if(!fileexist(局_当前版本号))
             return false //等他寫完資料
         end
-        if(Sqlite_读订单() == "")
+        if(staticgettext("状态") == "目前無訂單，抓取新訂單中")
             if(filereadex(局_最新版本号)> filereadex(局_当前版本号))
                 xy_卸载apk("MEmu_" & C_帐密["id"],"com.yabe")
                 xy_安装apk("MEmu_" & C_帐密["id"],"C:\\Users\\Lu\\Downloads\\逍遙安卓下載\\Update\\YabeRobot.apk")
@@ -245,22 +254,8 @@ end
 
 
 功能 按钮1_点击()
-    var 局_最后回报 = http获取页面源码(C_网域 & "LastStatus.php?Device=" & "march910","utf-8")
-    var 局_数组 = json转数组(局_最后回报)
-    局_数组[0]["Line_ID"] = url解码(局_数组[0]["Line_ID"],"utf-8")
-    traceprint(局_数组[0]["Line_ID"] )
-    //Web_取订单资料_单纯取资料("泰國")
-    // var 局_ID = 正则子表达式匹配(txt,"<p id=\"para_2\" style=\"padding:5px 0px 0px 0px;\">([a-zA-Z0-9\\._-\\x{4e00}-\\x{9fa5}]+)",false,true,true)
-    // traceprint(局_ID)
-    //这里添加你要执行的代码
-    //    变量 header = 数组()
-    //    header["Accept"] = "*/*"
-    //    header["User-Agent"] = "Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:17.0) Gecko/17.0 Firefox/17.0"
-    //    header["Accept-Language"] = "zh-CN,en-US;q=0.5"
-    //    header["Accept-Encoding"] = "deflate"
-    //    header["Cache-Control"] = "no-cache"
-    //    变量 body = http提交请求("get","http://140.130.20.180/test.php?age=get","","utf-8",header)
-    //    traceprint(body)
+    
+    
     return
     var s = "var a = document.getElementsByName(\"Line_ID\");return a[1].value;"
     traceprint(网页执行js("浏览器0",s))
@@ -274,7 +269,7 @@ end
 功能 按钮2_点击()
     //var 局_ = Web_取订单资料_单纯取资料("日本")
     //Sqlite_写订单(局_)
-    traceprint(Sqlite_读订单())
+    
     return
     //这里添加你要执行的代码
     //traceprint(网页元素选择("浏览器0","補送成功 - Try_again_Ok","tag:SELECT&name:Status&index:0"))
@@ -297,7 +292,7 @@ function 异常推播(参_讯息)
     header["Accept-Language"] = "zh-CN,en-US;q=0.5"
     header["Accept-Encoding"] = "deflate"
     header["Cache-Control"] = "no-cache"
-    变量 body = http提交请求("get","http://ok963963ok.synology.me/Yabe/getError.php?Error="& 局_讯息,"","utf-8",header)
+    变量 body = http提交请求("get","http://ok963963ok.synology.me/Yabe/getError.php?Error="& 局_讯息,"","utf-8",header,"",true,3000)
     traceprint(body)
 end
 
@@ -327,7 +322,7 @@ function getCookie(参_帐号,参_密码)
     var token = "e0efc91651d08055ebc578d8359f9d0c"
     var params = "token="& token &"&funparams=" & url编码(arraytostring(array("0"=参_帐号,"1"=参_密码)))
     var url = "http://get.baibaoyun.com/cloudapi/cloudappapi"
-    var ret = http提交请求("GET",url&"?"&params,"","utf-8")
+    var ret = http提交请求("GET",url&"?"&params,"","utf-8",null,"",true,3000)
     traceprint(ret)
     return ret
 end
@@ -352,7 +347,6 @@ end
     arraypush(局_资料,"","Message")
     Sqlite_写订单(局_资料)
     //messagebox(BBY_回报贴图资讯(C_帐密[0],editgettext("ID"),editgettext("Web"),editgettext("Country"),editgettext("Error"),true)) //仿造訂單
-    // traceprint(Web_取待送国家())
 结束
 
 
@@ -360,15 +354,19 @@ end
 
 功能 启动停止_点击()
     
+    
     if(buttongettext("启动停止") == "啟動")
         buttonsettext("启动停止","停止")
+        wlog("啟動停止_點擊","啟動")
         文件覆盖内容(C_运作路径,"Run")
         主线程 = threadbegin("主线程","")
         监测线程 = threadbegin("AppCarshCheckThread","")
         
     else
         文件覆盖内容(C_运作路径,"Stop") //让模拟器App可以停止
-        Sys_置讯息("停止")
+        Sys_置讯息("停止",true)
+        wlog("啟動停止_點擊","停止")
+        filedelete(C_个别资料夹 & "發圖中.txt")
         buttonsettext("启动停止","啟動")
         threadclose(主线程)
         threadclose(监测线程)
@@ -408,3 +406,48 @@ end
 结束
 
 
+
+function http_获取源码(参_网址,参_源码="")
+    Global_源码开关 = true
+    var 局_返回,局_响应,header = array("Accept" = "*/*")
+    if(参_源码 == "")
+        局_返回 =  http获取页面源码(参_网址,"utf-8")
+    else
+        局_返回 = http提交请求扩展("get",参_网址,参_源码,"",局_响应,header,"utf-8")
+    end
+    
+    Global_源码开关 = false
+    return 局_返回
+end
+
+
+//消息路由功能
+功能 Yabe_Client_消息路由(句柄,消息,w参数,l参数,时间,x坐标,y坐标)
+    
+    返回 假
+结束
+
+
+//消息过程功能
+功能 Yabe_Client_消息过程(消息,w参数,l参数)
+    if(w参数 == 120 && l参数 == 120)
+        if(buttongettext("启动停止") == "停止")
+            启动停止_点击()
+        end
+    end
+结束
+
+
+
+功能 getID_点击()
+    var a = array(),id
+    for(var i = 2; i < strsplit(filereadex("a:\\id.txt"),"\r\n",a); i++)
+        if(a == "")
+            break
+        end
+        id = id & a[i] & ","
+        
+    end
+    traceprint(arraysize(a))
+    设置剪切板(id)
+结束

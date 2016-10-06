@@ -3,7 +3,11 @@
     文件写日志(局_讯息,log_档案是否存在())
     if(参_显示)
         var now = 当前时间()
-        editsettext("Log",editgettext("Log") & strformat("%s:%s:%s",时间时(now),时间分(now),时间秒(now)) & "  "&参_讯息 & "\r\n")
+        var 局_秒 = 时间秒(now)
+        if(cint(局_秒)<10)
+            局_秒 = "0" & 局_秒
+        end
+        editsettext("Log",editgettext("Log") & strformat("%s:%s:%s",时间时(now),时间分(now),局_秒) & "  "&参_讯息 & "\r\n")
         窗口发送消息(controlgethandle("Log"),#115,#7,0)
     end
 end
