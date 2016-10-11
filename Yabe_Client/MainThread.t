@@ -65,6 +65,7 @@ function AppCarshCheckThread()
 end
 
 function bmpToGif()
+    wlog("bmpToGif","bmpToGif開始")
     var dll = com("bmpToGif.imageClass"),局_文件列表 = array()
     文件遍历(C_个别资料夹 & "訂單截圖",局_文件列表,null)
     if(!fileexist("C:\\xampp\\htdocs\\"))
@@ -77,8 +78,7 @@ function bmpToGif()
         
     end
     dll = null
-    
-    
+    wlog("bmpToGif","bmpToGif結束")
 end
 
 function AppCarshCheck()

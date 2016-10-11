@@ -7,6 +7,7 @@ var 主线程,监测线程
 var C_Noxshare
 var 临时线程句柄,Global_源码开关
 功能 Yabe_Client_初始化()
+    
     var 局_开始 = false
     var 局_参数 = 获取参数ex()
     if(arraysize(局_参数)>1)

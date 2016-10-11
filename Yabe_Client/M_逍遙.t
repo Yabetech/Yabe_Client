@@ -46,13 +46,12 @@ function xy_关闭模拟器(参_名称, 参_新版 = true)
             break
         end
     end
-    
-    
     if(hd > 0)
-        
         窗口关闭(hd)
+    else //2.9.0
+        窗口关闭(窗口查找(参_名称))
     end
-    sleep(3000)
+
     //    cmd(xy_取Manage路徑路径() & " controlvm \""& 参_名称 &"\" poweroff",true)
     //    sleep(3000)
 end
