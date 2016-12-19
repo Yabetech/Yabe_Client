@@ -15,7 +15,7 @@ function yes_is已处理() //局_疑似发送资料
         局_跳转失败 = yes_is已处理_等待页面跳转(局_Data)
         if(局_跳转失败)//todo 設定回報
             wlog("yes_is已處理","跳到回報頁面失敗  要回報的資料:" & 数组转资讯(局_Data))
-            异常推播("Client已停止請人工處理 原因：需回報訂單，與頁面資料不相符 " & 数组转资讯(局_Data))
+            异常推播("Client已停止請人工處理 原因：需回報訂單，與頁面資料不相符 " & 数组转资讯推播整理(局_Data,"",true))
             启动停止_点击()
             continue
         end
@@ -40,6 +40,7 @@ function yes_is已处理() //局_疑似发送资料
             init_删除文件锁()
             editsettext("订单资料2","")
             C_回报失败次数 = 0
+            Web_取待送国家("yes_已處理")
             if(combogettext("优先国家") != "") //取手動優先國
                 if(!Web_取订单资料(combogettext("优先国家"))) //沒有優先國的訂單
                     wlog("yes_is已處理","沒有優先國家的訂單了")
@@ -47,11 +48,12 @@ function yes_is已处理() //局_疑似发送资料
                 else
                     if(Web_取订单资料(局_Data["Country"]))//再次取同一個國家看看
                         wlog("yes_is已處理","有相同國家訂單")
+                    else
+                        wlog("yes_is已處理","無相同國家訂單")
                     end  
                 end
                 
             end
-            Web_取待送国家("yes_已處理")
             return true
         end
     end
@@ -78,9 +80,10 @@ function yes_is已处理_检测已有此图(参_数组资料) //检测App是否�
         if(!C_调试)
             参_数组资料["Message"] = "異常Z-其他錯誤 - Manual_Handling26"
             参_数组资料["Remark"] = "疑似有回報失敗已發送的貼圖"
-            wlog("yes_is已处理_檢測已有此圖","疑似有回報失敗已發送的貼圖，被回報為已有此圖資料為:" & 数组转资讯(参_数组资料))
+            wlog("yes_is已处理_檢測已有此圖","疑似有回報失敗已發送的貼圖，被回報為已有此圖資料為:" & 数组转资讯(参_数组资料,"",true))
             Sys_置讯息("疑似有回報失敗已發送的貼圖")
-            异常推播("疑似有回報失敗已發送的貼圖，被回報為已有此圖資料為:" & 数组转资讯(参_数组资料))
+            wlog("yes_is已处理_檢測已有此圖","實際回報狀態為" & http获取页面源码(C_网域 & "LastStatus.php?Device=" & C_帐密[0] & "&No=" & 参_数组资料["No"],"utf-8"),false)
+            //异常推播("疑似有回報失敗已發送的貼圖，被回報為已有此圖資料為:" & 数组转资讯推播整理(参_数组资料,"",true))
             webgo("浏览器0",Cw_国家网址[参_数组资料["Country"]])
             sleep(5000)
             Web_点选Boss("異常Z-其他錯誤 - Manual_Handling26",参_数组资料)
@@ -119,16 +122,15 @@ function yes_is已处理_等待页面跳转(参_数组资料)
 end
 
 function yes_订单数量检测()
-    var 局_限制 = 30
-    
+    var 局_限制 = 50
     filewriteini("訂單數",C_帐密[0],cstring(C_订单数量),C_配置路径)
+    
     if(C_订单数量>=局_限制)
         filewriteini("訂單數",C_帐密[0],局_限制,C_配置路径)
         Sys_置讯息("處理已達30次，重開模擬器釋放記憶體",true)
         wlog("yes_訂單數量檢測","處理已達30次，重開模擬器釋放記憶體")
-        sleep(2000)
-        filewriteini("訂單數",C_帐密[0],"0",C_配置路径)
         逍遥_关闭模拟器(false)
+        filewriteini("訂單數",C_帐密[0],"0",C_配置路径)
         var 局_重开等待 = filereadini("CenterConfig","StartAppDelay","C:\\Status.ini")
         wlog("yes_訂單數量檢測","重開等待"& 局_重开等待 &"秒")
         等待时间(局_重开等待*1000,"")

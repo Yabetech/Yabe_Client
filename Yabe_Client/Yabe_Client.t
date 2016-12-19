@@ -1,10 +1,10 @@
 ﻿var C_帐密 = array()
 var C_国家
-
 var C_Web
 var C_网域
 var 主线程,监测线程
 var C_Noxshare
+var C_订单标志=false
 var 临时线程句柄,Global_源码开关
 功能 Yabe_Client_初始化()
     var 局_开始 = false
@@ -16,12 +16,13 @@ var 临时线程句柄,Global_源码开关
         
         if(局_参数[3]<=3)
             窗口设置位置(窗口获取自我句柄(),(局_参数[3]-1)*480,538)
-        else
+            
+        else //發圖機的環境
             窗口设置位置(窗口获取自我句柄(),(局_参数[3]-2)*480,538)
         end
         局_开始 = true
     else
-        C_帐密[0] = "march911"
+        C_帐密[0] = "yabeline06"
         C_帐密[1] = "yabe@2016"
         C_帐密["id"] = 1
         窗口设置大小(窗口获取自我句柄(),487,617)
@@ -40,10 +41,8 @@ var 临时线程句柄,Global_源码开关
     for(var i = 0; i < arraysize(局_控件); i++)
         arraygetat(局_控件,i,局_Value,null)
         controlshow(局_控件[i],false)
-        
     end
-    //BBY_Reg()
-    
+    bmpToGif()
 结束
 
 
@@ -85,30 +84,7 @@ function 自动登入(参_开始=false)
     
 end
 
-function BBY_Reg()
-    var ret = reg("ok963963ok","d74c724b4e8b90810f57e466121453d8") 
-    if(ret != 0) 
-        messagebox(translateerr(ret)) 
-        return 
-    end
-    var retbuff 
-    ret = login("march911", "123",retbuff) 
-    if(ret != 0) 
-        messagebox(translateerr(ret),"通讯失败") 
-    else
-        //messagebox(retbuff) 
-        BBY_置回调()
-    end
-end
 
-function BBY_置回调()
-    //这里注意回调函数原型,bby_callback 与 bby_callbackex 两种类型需要在tc5.6以后才能使用,5.6以前版本请使用enumwindowsproc(对应bby_callback) 与 hookproc(对应bby_callbackex)
-    var callback_handle = callbackmalloc("bby_callbackloginW","bby_callback") //这里注意回调函数原型 
-    if(callback_handle !=0) 
-        msgcallback_loginW(callback_handle) //此类回调函数只能设置一个,如果设置多个,后面回调会覆盖前面的回调函数 
-        traceprint("设置回调函数成功") 
-    end
-end
 
 function Web_点选Boss(content,参_讯息="")//訊息為空 是中國訂單
     var 局_回报成功 = false,局_清空次数 = 0
@@ -139,7 +115,7 @@ function Web_点选Boss(content,参_讯息="")//訊息為空 是中國訂單
         //            wlog("Web_點選Boss","確認訂單回報成功,資料一致")
         //        end
         if((strfind(参_讯息,"異常A")> -1 || strfind(参_讯息,"異常B")> -1 || strfind(参_讯息,"異常C")> -1 || strfind(参_讯息,"異常Z")> -1) && !C_调试)
-            异常推播(数组转资讯(参_讯息))
+            异常推播(数组转资讯推播整理(参_讯息,"",true))
         end
         //todo 要等頁面跳轉完
         Sqlite_写订单("")
@@ -151,6 +127,9 @@ function Web_点选Boss(content,参_讯息="")//訊息為空 是中國訂單
             filedelete(C_DB_OrderPath)
             sleep(200)
             if(局_清空次数>=5)
+                sleep(2000)
+                逍遥_关闭模拟器(false)
+                sleep(2000)
                 退出()
             end
             init_SqlPath()
@@ -169,7 +148,7 @@ end
 function Web_资料符合(参_国家网址) //订单资料 和 页面资料是否符合
     wlog("Web_資料符合","準備比對資料是否符合",false)
     sleep(500)
-    var 局_网址 = 网页获取超链接("浏览器0")
+    var 局_网址 = strreplace(网页获取超链接("浏览器0"),"#","")
     if(参_国家网址 != 局_网址)
         messagebox("應轉向網址:" & 参_国家网址 & "\r\n 當前網址:" & 局_网址,"異常網址")
     end
@@ -285,14 +264,17 @@ end
 结束
 
 function 异常推播(参_讯息)
-    var 局_讯息 = 窗口获取标题(窗口获取自我句柄()) & "    " & 参_讯息
+    // var 局_讯息 = 窗口获取标题(窗口获取自我句柄()) & "    " & 参_讯息
+    var 局_讯息 = 参_讯息 & "Processr：" & 窗口获取标题(窗口获取自我句柄())
     变量 header = 数组()
     header["Accept"] = "*/*"
     header["User-Agent"] = "Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:17.0) Gecko/17.0 Firefox/17.0"
     header["Accept-Language"] = "zh-CN,en-US;q=0.5"
     header["Accept-Encoding"] = "deflate"
     header["Cache-Control"] = "no-cache"
-    变量 body = http提交请求("get","http://ok963963ok.synology.me/Yabe/getError.php?Error="& 局_讯息,"","utf-8",header,"",true,3000)
+    //变量 body = http提交请求("get","http://ok963963ok.synology.me/Yabe/getError.php?Error="& 局_讯息,"","utf-8",header,"",true,3000)
+    变量 body = http提交请求("get","http://ok963963ok.synology.me/Yabe/PushError.php?Error="& 局_讯息,"","utf-8",header,"",true,3000)
+    // 变量 body = http获取页面源码("http://ok963963ok.synology.me/Yabe/PushError.php?Error="& 局_讯息,"utf-8")
     traceprint(body)
 end
 
@@ -353,7 +335,6 @@ end
 
 
 功能 启动停止_点击()
-    
     
     if(buttongettext("启动停止") == "啟動")
         buttonsettext("启动停止","停止")
@@ -433,6 +414,11 @@ end
     if(w参数 == 120 && l参数 == 120)
         if(buttongettext("启动停止") == "停止")
             启动停止_点击()
+        end
+    end
+    if(w参数 == 5000 && l参数 == 5000)
+        if(staticgettext("状态") == "目前無訂單，抓取新訂單中")
+            C_订单标志 = true
         end
     end
 结束

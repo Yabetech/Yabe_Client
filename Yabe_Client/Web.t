@@ -15,9 +15,11 @@
     //traceprint("http://ok963963ok.synology.me/Yabe/YabeVpn.php?Device="& C_帐密[0] &"&OnOff=True")
     if(strfind(局_结果,"Fail") > -1)
         filewriteini("VPN",C_帐密[0],"",C_配置路径)
+        wlog("Web_取VPN權限","系統不給予VPN權限",true)
         return false
     else
         staticsettext("状态","")//取得權限就清空狀態顯示
+        wlog("Web_取VPN權限","系統給予VPN權限",true)
         filewriteini("VPN",C_帐密[0],"√",C_配置路径)
         return true
     end
@@ -46,13 +48,16 @@ end
 
 
 function Web_取订单资料(参_国家)
-    if(Web_中国回报(参_国家)) // 中國直接回報中國異常
-        return false
-    end
     if(参_国家 != "臺灣") // 不等於臺灣必須先取得VPN權限
         var 局_贴图权限 = Web_取VPN权限()
+        if(局_贴图权限)// 有權限直接取國外的
+            wlog("Web_取訂單資料","取得權限準備取" & 参_国家,false)
+            return Web_取订单资料_单纯取资料(参_国家)
+        end
         while(!局_贴图权限)
+            
             if(局_贴图权限)
+                wlog("Web_取訂單資料","循環取得權限準備取" & 参_国家,false)
                 return Web_取订单资料_单纯取资料(参_国家)
             else
                 if(arrayfindkey(C_待送国家,"臺灣")>-1)
@@ -61,26 +66,25 @@ function Web_取订单资料(参_国家)
                     return Web_取订单资料_单纯取资料("臺灣")
                 else
                     Sys_置讯息(参_国家 & "有國外訂單，等待VPN權限",true)
-                    等待时间(filereadini("CenterConfig","VPNdelay",C_配置路径)*1000,"等待")
                     if(strfind(Web_取待送国家("Web_取訂單資料"),"臺灣")>-1)
                         staticsettext("状态","有國外訂單，但無VPN權限，改發台灣單")
+                        wlog("Web_取訂單資料","有國外訂單，但無VPN權限，改發台灣單")
                         sleep(3000)
                         return Web_取订单资料_单纯取资料("臺灣")
                     end
+                    等待时间(filereadini("CenterConfig","VPNdelay",C_配置路径)*1000,"等待")
                     局_贴图权限 = Web_取VPN权限() //重新取一次權限
+                    
                 end          
             end
         end
-        
-        
     end
     return Web_取订单资料_单纯取资料(参_国家) //取臺灣的
 end
 
 function Web_取订单资料_单纯取资料(参_国家)
-    var 局_ID,局_Code
+    var 局_ID,局_Code,局_记录时间 = 获取系统时间()
     wlog("Web_取訂單資料_單純取資料","準備獲取訂單資訊",false)
-    var 局_记录时间 = 获取系统时间()
     局_Code = http_获取源码(Cw_国家网址[参_国家]) //页面原始码 http获取页面源码(Cw_国家网址[参_国家],"utf-8") 
     wlog("Web_取訂單資料_單純取資料","獲取訂單資訊結束",false)
     if(局_Code)
@@ -93,28 +97,29 @@ function Web_取订单资料_单纯取资料(参_国家)
         var 局_Error = 正则子表达式匹配(局_Code,"<font color=\"red\">【(\\S{0,4})",false,false)
         var 局_价格 = 正则子表达式匹配(局_Code,"<p id=\"Price\" style=\"padding:5px 0px 0px 0px;\">(\\d+)",true,true)
         var 局_No = 正则子表达式匹配(局_Code,"id=\"No\" value=\"(\\d+)",true,true)
+        var 局_贴图名称 = Web_取订单资料_单纯取资料_贴图名称处理(局_Code)
         var 局_资料=array()
         if(局_ID[0] != null && 局_LineWeb != null && (!fileexist(C_个别资料夹 & "發圖中.txt"))) //(strfind(aa,"已處理") == -1 || aa == "" ) 確保不是再發圖得狀態
             //arraypush(局_资料,C_帐密[0],"Login")
             arraypush(局_资料,局_ID[0],"ID")
+            arraypush(局_资料,"","Message")
+            arraypush(局_资料,局_贴图名称,"StkName")
             arraypush(局_资料,局_LineWeb,"LineWeb")
             arraypush(局_资料,参_国家,"Country")
+            arraypush(局_资料,"未接收","Status")
             //arraypush(局_资料,C_国家英文[参_国家],"Country")
             arraypush(局_资料,局_Error[0],"Error")//0 無異常 1封鎖異常 2更新異常
-            arraypush(局_资料,"未接收","Status")
             arraypush(局_资料,局_价格["0"],"Price")
-            arraypush(局_资料,"","Message")
             arraypush(局_资料,局_No["0"],"No")
             yes_is已处理_检测已有此图(局_资料)//检测App是否已經發過此圖，可能是上一个回报失败
             Sqlite_写订单(局_资料)
-            //staticsettext("订单资料",)
             editsettext("订单资料2"," " & 资讯断行(数组转资讯(局_资料,"Status")))
             webgo("浏览器0",Cw_国家网址[参_国家])
             wlog("Web_取訂單資料_單純取資料","已發送資料給APP端發圖")
             Sys_置讯息("已發送資料給APP端發圖",true)
             Sql写订单(局_ID[0],局_资料)
             C_订单发送时间 = 当前时间()
-            sleep(2000)
+            sleep(1000)
             return true
         end
     end
@@ -126,6 +131,23 @@ function Web_取订单资料_单纯取资料(参_国家)
     staticsettext("等待","")
     Web_置VPN解锁()
     return false
+end
+
+//把Code 丢进来后处理所有贴图名称
+function Web_取订单资料_单纯取资料_贴图名称处理(参_网页码)
+    var 局_结果 = 正则子表达式匹配(参_网页码,"</span>(.+)",true,true)
+    if(arraysize(局_结果) >= 3)
+        for(var i = 0; i < arraysize(局_结果); i++)
+            if(strfind(局_结果[i],"/a") == -1 && strfind(局_结果[i],"/div") == -1)
+                var 局_result = strreplace(局_结果[i]," ","")
+                局_result = strreplace(局_result,"&","")
+                局_result = strreplace(局_result,";","")
+                局_result = strreplace(局_result,"\"","")
+                return 局_result
+            end
+        end
+    end
+    return ""
 end
 
 function Web_中国回报(参_国家)
@@ -167,13 +189,15 @@ function Web_取待送国家(参_讯息="") //取有多少資料可以送
     wlog("Web_取待送國家","準備獲取待送國家",false)
     var 局_页面 = http_获取源码(C_YabeWeb & "Member2.php") //http获取页面源码(C_YabeWeb & "Member2.php","utf-8")
     wlog("Web_取待送國家","獲取待送國家完成",false)
-    
+    filewriteex("A:\\123.txt",局_页面)
+    //filewriteex("A:\\123.txt",局_页面,2)
+    // 设置剪切板(局_页面)
     if(strfind(局_页面,"發完") > -1 || fileexist(C_个别资料夹 & "發圖中.txt")) // 已經發完網站無訂單，
         Web_取待送国家_是否发完(局_页面)
         return ""
     elseif(strfind(局_页面,"登入會員")> -1 || strfind(局_页面,"404")> -1)// 已经被登出了
         wlog("Web_取待送國家","網站異常登出,或者瞬斷404")
-        异常推播("網站異常登出,或者瞬斷404")
+        //异常推播("網站異常登出,或者瞬斷404")
         Sys_错误停止(C_帐密[0] & "網站異常登出,或者瞬斷404")
         退出()
         return ""
@@ -207,6 +231,8 @@ end
 
 function Web_取待送国家_是否发完(参_网页码)
     if(strfind(参_网页码,"發完")>-1 )
+        arrayclear(C_待送国家)
+        Web_取待送国家_其他待发(参_网页码)
         文件写配置("待發",C_帐密[0],"",C_配置路径)
         wlog("Web_取待送國家","目前無訂單，抓取新訂單中")
         editsettext("订单资料2","")
@@ -215,6 +241,22 @@ function Web_取待送国家_是否发完(参_网页码)
         staticsettext("等待","")
         Web_置VPN解锁()
     end
+end
+
+//判断是否其他手机有待发
+function Web_取待送国家_其他待发(参_网页码)
+    var 局_value,局_key
+    var 局_成果 = 正则子表达式匹配(参_网页码,"class=\"markText13 \">(\\w+)",true,true)  
+    if(arraysize(局_成果) > 0)
+        for(var i = 0; i < arraysize(局_成果); i++)
+            arraygetat(局_成果,i,局_value,局_key)
+            if(strfind(局_value,"march") > -1 || strfind(局_value,"yabe") > -1)
+                窗口发送消息(窗口查找(局_value),5000,5000,5000)
+            end
+            
+        end
+    end
+    //正则子表达式匹配(局_Code,"<p id=\"para_2\" style=\"padding:5px 0px 0px 0px;\">([\\x{4e00}-\\x{9fa5}a-zA-Z0-9\\._-]+)",false,true,true)
 end
 
 function Web_取待送国家_整理国家(&参_国家)
@@ -372,10 +414,13 @@ function Sqlite_24小时订单处理() //处理24小时以前订单发送记录
     end
 end
 
-function 数组转资讯(参_数组,参_过滤="")
+function 数组转资讯(参_数组,参_过滤="",参_过滤空值=false)
     var 局_讯息 = "",局_Value,局_Key
     for(var i = 0; i < arraysize(参_数组); i++)
         arraygetat(参_数组,i,局_Value,局_Key)
+        if(参_过滤空值 && (局_Value == "" || 局_Value == false)) //過濾空值
+            continue
+        end
         if(strfind(参_过滤,局_Key) == -1)
             局_讯息 = 局_讯息 & 局_Key & "：" & 局_Value & " | "
         end
@@ -383,13 +428,42 @@ function 数组转资讯(参_数组,参_过滤="")
     return 局_讯息
 end
 
-function 资讯断行(参_字串)
+function 数组转资讯推播整理(参_数组,参_过滤="",参_过滤空值=false)
+    var 局_讯息 = "",局_Value,局_Key
+    for(var i = 0; i < arraysize(参_数组); i++)
+        arraygetat(参_数组,i,局_Value,局_Key)
+        if(参_过滤空值 && (局_Value == "" || 局_Value == null)) //過濾空值
+            continue
+        end
+        if(strfind(参_过滤,局_Key) == -1)
+            if(局_Key == "LineWeb")
+                局_讯息 =  局_讯息 & 局_Key & "：" & 局_Value & " | " & " | "
+            else
+                局_讯息 = 局_讯息 & 局_Key & "：" & 局_Value & " | "
+            end
+            
+        end
+    end
+    局_讯息 = strreplace(局_讯息,"ID：","")
+    局_讯息 = strreplace(局_讯息,"LineWeb：","")
+    局_讯息 = strreplace(局_讯息,"StkName：","")
+    //    局_讯息 = strreplace(局_讯息,"Country：","")
+    局_讯息 = strreplace(局_讯息,"Message：","")
+    return 局_讯息
+end
+
+function 资讯断行(参_字串,参_url编码=false)
     var 局_数组 = array(),局_讯息=""
     参_字串 = 参_字串 & " " & 参_字串
     for(var i = 0; i < strsplit(参_字串,"|",局_数组); i++)
         局_讯息 = 局_讯息 & 局_数组[i] & "\r\n"
     end
-    return 局_讯息
+    if(参_url编码)
+        return url编码(局_讯息)
+    else
+        return 局_讯息
+    end
+    
 end
 
 

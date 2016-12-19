@@ -5,12 +5,12 @@ end
 function AutoReadList(参_路径)
     buttonsettext("批量下单","下單中")
     var 局_ID清单 = array()
-//    if(strfind(editgettext("ID"),",")>0)
-//       
-//    else
-//        局_ID清单[0] = editgettext("ID")
-//    end
-     strsplit(filereadex("a:\\id.txt"),"\r\n",局_ID清单)
+    //    if(strfind(editgettext("ID"),",")>0)
+    //       
+    //    else
+    //        局_ID清单[0] = editgettext("ID")
+    //    end
+    strsplit(filereadex("a:\\id.txt"),"\r\n",局_ID清单)
     for(var i = 0; i < arraysize(局_ID清单); i++)
         自动下单单元(参_路径,局_ID清单[i])
     end

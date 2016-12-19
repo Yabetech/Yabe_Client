@@ -3,6 +3,7 @@ var Cy_OrderPath // 訂單ini路徑
 var C_配置路径 = "C:\\Status.ini" //放置夜神Nox.exe和 待發的路徑
 //var C_YabeWeb=C_YabeWeb & ""
 //var C_YabeWeb="http://deve.yabeline.tw/"
+//var C_调试 = true
 var C_YabeWeb="http://yabeline.tw/"
 var C_调试 = false
 var C_待送国家 = array()

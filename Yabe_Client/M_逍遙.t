@@ -46,20 +46,17 @@ function xy_关闭模拟器(参_名称, 参_新版 = true)
             break
         end
     end
-    
-    
     if(hd > 0)
-        
         窗口关闭(hd)
+    elseif(窗口查找("逍遙安卓 2.7.2 - " & 参_名称)>0)
+        窗口关闭(窗口查找("逍遙安卓 2.7.2 - " & 参_名称))
+    else
+        wlog("xy_關閉模擬器","找不到模擬器特徵")
+        wlog("xy_關閉模擬器","關閉失敗")
     end
-    sleep(3000)
     //    cmd(xy_取Manage路徑路径() & " controlvm \""& 参_名称 &"\" poweroff",true)
     //    sleep(3000)
 end
-
-
-
-
 
 function xy_取运行状态(参_名称)
     // "Started."  运行中 "Starting." 启动中  "Not start or Starting." 未知状态

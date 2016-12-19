@@ -1,5 +1,4 @@
 ﻿function 主线程()
-    // todo
     C_订单发送时间 = null
     Global_源码开关 = false
     var 局_是否有国家=""
@@ -7,7 +6,6 @@
     Sqlite_写订单("")
     while(true)
         //偵測是否已處理，日則選擇並回報，如果档案已处理或者空且待送国家>0就取订单
-        
         if(arraysize(C_待送国家) > 0)  
             if(!fileexist(C_个别资料夹 & "發圖中.txt")) //無權限代表不能讀爾以
                 var 局_Key
@@ -32,7 +30,6 @@
         if(局_是否有国家 == "" || staticgettext("状态") == "已發送資料給APP端發圖" || fileexist(C_个别资料夹 & "發圖中.txy"))
             等待时间(间隔时间(局_处理订单),"等待")
         end
-        
         逍遥_更新Apk()
     end
 end
@@ -41,7 +38,6 @@ function AppCarshCheckThread()
     
     while(true)
         sleep(2000)
-        
         AppCarshCheck()
         for(var i = 0; i < 10 && Global_源码开关; i++)
             if(i == 9)
@@ -65,19 +61,23 @@ function AppCarshCheckThread()
 end
 
 function bmpToGif()
-    var dll = com("bmpToGif.imageClass"),局_文件列表 = array()
+    var 局_迁移路径 = "Z:\\"
+    wlog("bmpToGif","bmpToGif開始",false)
+    // var dll = com("bmpToGif.imageClass"),
+    var 局_文件列表 = array()
     文件遍历(C_个别资料夹 & "訂單截圖",局_文件列表,null)
-    if(!fileexist("C:\\xampp\\htdocs\\"))
+    if(!fileexist(局_迁移路径))
         return
     end
     for(var i = 0; i < arraysize(局_文件列表); i++)
         if(strfind(局_文件列表[i],".bmp")>-1)
-            dll.bmpToGif(C_个别资料夹 & "訂單截圖\\" & 局_文件列表[i],"C:\\xampp\\htdocs\\" & strreplace(局_文件列表[i],".bmp",".gif"))
+            //  dll.bmpToGif(C_个别资料夹 & "訂單截圖\\" & 局_文件列表[i],"C:\\xampp\\htdocs\\" & strreplace(局_文件列表[i],".bmp",".gif"))
+            // messagebox(系统获取进程路径() & "bmpToGifExe.exe " & C_个别资料夹 & "訂單截圖\\" & 局_文件列表[i] &" C:\\xampp\\htdocs\\" & strreplace(局_文件列表[i],".bmp",".gif"))
+            cmd(系统获取进程路径() & "bmpToGifExe.exe " & C_个别资料夹 & "訂單截圖\\" & 局_文件列表[i] & " " & 局_迁移路径 & strreplace(局_文件列表[i],".bmp",".gif"),true)
         end
-        
     end
-    dll = null
-    
+    //dll = null
+    wlog("bmpToGif","bmpToGif結束",false)
     
 end
 
@@ -94,9 +94,7 @@ function AppCarshCheck()
         end
         staticsettext("状态","其他-APP疑似崩潰，正在等待恢復")
         threadsuspend(主线程)
-        
         文件覆盖内容(局_Path,"") //清空避免下次再次讀到
-        
         逍遥_关闭模拟器(false)
         sleep(10*1000)
         threadresume(主线程)
@@ -125,6 +123,11 @@ end
 function 等待时间(参_时间,参_讯息)
     for(var i = 0; i < 参_时间/1000 ; i++)
         staticsettext("等待",参_讯息 & cstring((参_时间/1000)-i))
+        if(C_订单标志)
+            wlog("等待時間","有訂單退出等待，加速" & cstring((参_时间/1000) - i) & "秒")
+            C_订单标志 = false
+            break
+        end
         sleep(1000)
     end
 end
