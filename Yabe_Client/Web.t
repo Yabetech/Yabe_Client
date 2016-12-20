@@ -121,6 +121,17 @@ function Web_取订单资料_单纯取资料(参_国家)
             C_订单发送时间 = 当前时间()
             sleep(1000)
             return true
+        else
+            if(!fileexist(C_个别资料夹 & "發圖中.txt"))
+                filedelete("C:\\ErrorRecord.txt")
+                filewriteex("C:\\ErrorRecord.txt",局_Code)
+                webgo("浏览器0",Cw_国家网址[参_国家])
+                sleep(2000)
+                异常推播("異常Z-訂單資料無法分析,請人工處理並填工單，請把C:\\ErrorRecord.txt提交給工程師")
+                Web_点选Boss("異常Z-其他錯誤 - Manual_Handling26","異常無法分析",true)
+            end
+            
+            
         end
     end
     if(!局_Code && 获取系统时间() - 局_记录时间 > 25000)

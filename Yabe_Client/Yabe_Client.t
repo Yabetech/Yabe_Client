@@ -85,13 +85,16 @@ function 自动登入(参_开始=false)
 end
 
 
-
-function Web_点选Boss(content,参_讯息="")//訊息為空 是中國訂單
+function Web_点选Boss(content,参_讯息="",参_不确定=false)//訊息為空 是中國訂單
     var 局_回报成功 = false,局_清空次数 = 0
     wlog("Web_點選Boss","準備處理Boss")
     if(网页元素选择("浏览器0",content,"tag:SELECT&name:Status&index:0"))
         sleep(200)
         网页元素点击("浏览器0","tag:INPUT&value:Boss")
+        if(参_不确定) // 單純選擇不管用那個
+            sleep(5000)
+            return 
+        end
         //        if(参_讯息 != "")
         //            for(var i = 0; i < 5; i++)
         //                sleep(3000)
