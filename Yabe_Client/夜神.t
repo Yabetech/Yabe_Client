@@ -10,7 +10,7 @@ function yes_is已处理() //局_疑似发送资料
     C_订单发送时间 = null
     wlog("yes_is已處理","收到訂單已處理，準備回報網站")
     while(true)
-        
+        bmpToGif()
         yes_is已处理_首次检测页面资料(局_Data) //检测当前页面资料，不符合则跳转等待2000秒
         局_跳转失败 = yes_is已处理_等待页面跳转(局_Data)
         if(局_跳转失败)//todo 設定回報
@@ -19,7 +19,7 @@ function yes_is已处理() //局_疑似发送资料
             启动停止_点击()
             continue
         end
-        bmpToGif()
+        
         if(!Web_资料符合(Cw_国家网址[局_Data["Country"]])) //檢測頁面上的資料，是否一致
             return false
         end
@@ -40,13 +40,16 @@ function yes_is已处理() //局_疑似发送资料
             init_删除文件锁()
             editsettext("订单资料2","")
             C_回报失败次数 = 0
-            Web_取待送国家("yes_已處理")
+            //var 局_待送国家 = Web_取待送国家("yes_已處理")
             if(combogettext("优先国家") != "") //取手動優先國
-                if(!Web_取订单资料(combogettext("优先国家"))) //沒有優先國的訂單
+                // 局_待送国家 = Web_取待送国家()
+                
+                if(!Web_取订单资料(combogettext("优先国家"))) //沒有優先國的訂單   strfind(局_待送国家,combogettext("优先国家")) == -1
                     wlog("yes_is已處理","沒有優先國家的訂單了")
                     combosetcursel("优先国家",-1)
                 else
-                    if(Web_取订单资料(局_Data["Country"]))//再次取同一個國家看看
+                    if(Web_取订单资料(局_Data["Country"]) )//再次取同一個國家看看  strfind(局_待送国家,局_Data["Country"]) > -1 
+                        //Web_取订单资料(局_Data["Country"])
                         wlog("yes_is已處理","有相同國家訂單")
                     else
                         wlog("yes_is已處理","無相同國家訂單")
@@ -81,12 +84,16 @@ function yes_is已处理_检测已有此图(参_数组资料) //检测App是否�
             参_数组资料["Message"] = "異常Z-其他錯誤 - Manual_Handling26"
             参_数组资料["Remark"] = "疑似有回報失敗已發送的貼圖"
             wlog("yes_is已处理_檢測已有此圖","疑似有回報失敗已發送的貼圖，被回報為已有此圖資料為:" & 数组转资讯(参_数组资料,"",true))
+            wlog("yes_is已处理_檢測已有此圖",arraytostring(局_返回))
             Sys_置讯息("疑似有回報失敗已發送的貼圖")
             wlog("yes_is已处理_檢測已有此圖","實際回報狀態為" & http获取页面源码(C_网域 & "LastStatus.php?Device=" & C_帐密[0] & "&No=" & 参_数组资料["No"],"utf-8"),false)
-            //异常推播("疑似有回報失敗已發送的貼圖，被回報為已有此圖資料為:" & 数组转资讯推播整理(参_数组资料,"",true))
             webgo("浏览器0",Cw_国家网址[参_数组资料["Country"]])
             sleep(5000)
-            Web_点选Boss("異常Z-其他錯誤 - Manual_Handling26",参_数组资料)
+            if(Web_比对页面id和网址(参_数组资料["ID"],参_数组资料["LineWeb"]))
+                wlog("yes_is已处理_檢測已有此圖","當前頁面資料符合回報異常Z")
+                Web_点选Boss("異常Z-其他錯誤 - Manual_Handling26",参_数组资料)
+            end
+            
             return false
             //启动停止_点击()
         end

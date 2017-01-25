@@ -39,6 +39,7 @@ function AppCarshCheckThread()
     while(true)
         sleep(2000)
         AppCarshCheck()
+        //bmpToGif()
         for(var i = 0; i < 10 && Global_源码开关; i++)
             if(i == 9)
                 wlog("AppCarshCheckThread","獲取網頁資料超時，重新開始")
@@ -61,6 +62,7 @@ function AppCarshCheckThread()
 end
 
 function bmpToGif()
+     
     var 局_迁移路径 = "Z:\\"
     wlog("bmpToGif","bmpToGif開始",false)
     // var dll = com("bmpToGif.imageClass"),
@@ -69,10 +71,11 @@ function bmpToGif()
     if(!fileexist(局_迁移路径))
         return
     end
-    for(var i = 0; i < arraysize(局_文件列表); i++)
+    for(var i = 0; i < arraysize(局_文件列表) && i <= 10; i++)
         if(strfind(局_文件列表[i],".bmp")>-1)
             //  dll.bmpToGif(C_个别资料夹 & "訂單截圖\\" & 局_文件列表[i],"C:\\xampp\\htdocs\\" & strreplace(局_文件列表[i],".bmp",".gif"))
             // messagebox(系统获取进程路径() & "bmpToGifExe.exe " & C_个别资料夹 & "訂單截圖\\" & 局_文件列表[i] &" C:\\xampp\\htdocs\\" & strreplace(局_文件列表[i],".bmp",".gif"))
+            sleep(500)
             cmd(系统获取进程路径() & "bmpToGifExe.exe " & C_个别资料夹 & "訂單截圖\\" & 局_文件列表[i] & " " & 局_迁移路径 & strreplace(局_文件列表[i],".bmp",".gif"),true)
         end
     end
@@ -80,6 +83,8 @@ function bmpToGif()
     wlog("bmpToGif","bmpToGif結束",false)
     
 end
+
+
 
 function AppCarshCheck()
     if(checkgetstate("不检测App崩溃"))
@@ -127,6 +132,9 @@ function 等待时间(参_时间,参_讯息)
             wlog("等待時間","有訂單退出等待，加速" & cstring((参_时间/1000) - i) & "秒")
             C_订单标志 = false
             break
+        end
+        if(i == 10)
+            bmpToGif()
         end
         sleep(1000)
     end

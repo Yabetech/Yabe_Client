@@ -22,7 +22,7 @@ var 临时线程句柄,Global_源码开关
         end
         局_开始 = true
     else
-        C_帐密[0] = "yabeline06"
+        C_帐密[0] = "yabeline03"
         C_帐密[1] = "yabe@2016"
         C_帐密["id"] = 1
         窗口设置大小(窗口获取自我句柄(),487,617)
@@ -123,12 +123,16 @@ function Web_点选Boss(content,参_讯息="",参_不确定=false)//訊息為空
         //todo 要等頁面跳轉完
         Sqlite_写订单("")
         staticsettext("状态","")
-        while(Sqlite_读订单() != "") //如果寫入為空，但是讀出又不為為空
+        var 局_读订单结果 = Sqlite_读订单()
+        while(局_读订单结果 != "") //如果寫入為空，但是讀出又不為為空
             局_清空次数 = 局_清空次数 + 1
-            wlog("Web_點選Boss","Sqlite清空失敗，準備重試")
+            wlog("Web_點選Boss","Sqlite清空失敗，準備重試" & 局_读订单结果)
             sleep(200)
             filedelete(C_DB_OrderPath)
             sleep(200)
+            if(局_读订单结果 == "無權限")
+                文件创建(C_个别资料夹 & "cread.txt")
+            end
             if(局_清空次数>=5)
                 sleep(2000)
                 逍遥_关闭模拟器(false)
@@ -136,7 +140,9 @@ function Web_点选Boss(content,参_讯息="",参_不确定=false)//訊息為空
                 退出()
             end
             init_SqlPath()
+            局_读订单结果 = Sqlite_读订单()
         end
+        文件删除(C_个别资料夹 & "cread.txt")
         if(isarray(参_讯息))
             Sql写回报(参_讯息["id"],content,参_讯息["Remark"])
         end
@@ -249,7 +255,7 @@ end
 
 
 功能 按钮2_点击()
-    //var 局_ = Web_取订单资料_单纯取资料("日本")
+    
     //Sqlite_写订单(局_)
     
     return
@@ -272,13 +278,45 @@ function 异常推播(参_讯息)
     变量 header = 数组()
     header["Accept"] = "*/*"
     header["User-Agent"] = "Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:17.0) Gecko/17.0 Firefox/17.0"
-    header["Accept-Language"] = "zh-CN,en-US;q=0.5"
+    header["Accept-Language"] = "zh-tw,en-US;q=0.5"
     header["Accept-Encoding"] = "deflate"
     header["Cache-Control"] = "no-cache"
     //变量 body = http提交请求("get","http://ok963963ok.synology.me/Yabe/getError.php?Error="& 局_讯息,"","utf-8",header,"",true,3000)
-    变量 body = http提交请求("get","http://ok963963ok.synology.me/Yabe/PushError.php?Error="& 局_讯息,"","utf-8",header,"",true,3000)
+    //变量 body = http提交请求("get","http://ok963963ok.synology.me/Yabe/PushError.php?Error="& 局_讯息,"","utf-8",header,"",true,3000)
+    //变量 body = http提交请求("get","http://www.iyabetech.com/Yabe/PushError.php?Error="& 局_讯息,"","utf-8",header,"",true,3000)
+    //变量 body = http提交请求("Post","http://ok963963ok.synology.me/Yabe/PushError.php","Error= " & 局_讯息,"utf-8",header,"",true,3000)
+
+
+   // var res = 网页执行js("浏览器0","var uri = \"yabeline03 | http://yabeline.tw/Admin_User.php?Line_ID=yabeline03 | 1272686-手指抽蓄 | http://yabeline.tw/Stickers_Search.php?Search=1272686 | line://shop/detail/1272686 | http://yabeline.tw/Admin_Stickers_Edit.php?Number=1272686&Type=1 |  | Country：臺灣 | Status：未接收 | Price：50 | No：1056216 | \";var t = encodeURI(uri); return t")
+    var res = 网页执行js("浏览器0",strformat("var uri = \"%s\";var t = encodeURI(uri); return t",局_讯息))
+
+    变量 body = http提交请求("post","http://www.insightech360.com/Yabe/PushError.php","Error=" & res,"utf-8",header,"",true,3000)
+    
     // 变量 body = http获取页面源码("http://ok963963ok.synology.me/Yabe/PushError.php?Error="& 局_讯息,"utf-8")
     traceprint(body)
+end
+
+
+function 编码转换(str)
+    var ScriptContorl=com("MSScriptControl.ScriptControl")
+    ScriptContorl.AllowUI = true
+    ScriptContorl.Language = "JavaScript"//"JavaScript"
+    ScriptContorl.AddCode("function add(s1){return encodeURI(s1);}")
+    var  ret=ScriptContorl.Run("add",str)
+    ScriptContorl=null
+    return ret
+end
+
+
+function encodeURL(str)
+    var ScriptContorl=com("MSScriptControl.ScriptControl")
+    ScriptContorl.AllowUI=true
+    ScriptContorl.Language="JavaScript"   
+    var jsfunction="function encode(str){return encodeURI(str)}" 
+    var runcode="encode(\""&str&"\");"
+    var ret=ScriptContorl.Eval(jsfunction&runcode)
+    ScriptContorl=null
+    return ret
 end
 
 
@@ -354,6 +392,7 @@ end
         buttonsettext("启动停止","啟動")
         threadclose(主线程)
         threadclose(监测线程)
+        Web_置VPN解锁()
     end
     
 结束

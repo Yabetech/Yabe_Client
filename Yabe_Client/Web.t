@@ -7,7 +7,8 @@
     header["Accept-Encoding"] = "deflate"
     header["Cache-Control"] = "no-cache"
     var 局_记录时间 = 获取系统时间()
-    局_结果 = http提交请求("get","http://ok963963ok.synology.me/Yabe/YabeVpn2.php?Device="& C_帐密[0] &"&OnOff=True","","utf-8",header,"",true,3000)
+    //局_结果 = http提交请求("get","http://ok963963ok.synology.me/Yabe/YabeVpn2.php?Device="& C_帐密[0] &"&OnOff=True","","utf-8",header,"",true,3000)
+    局_结果 = http提交请求("get","http://www.iyabetech.com/Yabe/YabeVpn2.php?Device="& C_帐密[0] &"&OnOff=True","","utf-8",header,"",true,3000)
     if(获取系统时间()-局_记录时间 > 5000)
         wlog("Web_取VPN權限","獲取權限超過5秒，可能超時",false)
     end
@@ -33,7 +34,8 @@ function Web_置VPN解锁()
     header["Accept-Language"] = "zh-CN,en-US;q=0.5"
     header["Accept-Encoding"] = "deflate"
     header["Cache-Control"] = "no-cache"
-    局_结果 = http提交请求("get","http://ok963963ok.synology.me/Yabe/YabeVpn2.php?Device="& C_帐密[0] &"&OnOff=false","","utf-8",header,"",true,3000)
+    //局_结果 = http提交请求("get","http://ok963963ok.synology.me/Yabe/YabeVpn2.php?Device="& C_帐密[0] &"&OnOff=false","","utf-8",header,"",true,3000)
+    局_结果 = http提交请求("get","http://www.iyabetech.com/Yabe/YabeVpn2.php?Device="& C_帐密[0] &"&OnOff=false","","utf-8",header,"",true,3000)
     filewriteini("VPN",C_帐密[0],"",C_配置路径)
     //traceprint("http://ok963963ok.synology.me/Yabe/YabeVpn.php?Device="& C_帐密[0] &"&OnOff=True")
     // traceprint(局_结果)
@@ -88,6 +90,7 @@ function Web_取订单资料_单纯取资料(参_国家)
     局_Code = http_获取源码(Cw_国家网址[参_国家]) //页面原始码 http获取页面源码(Cw_国家网址[参_国家],"utf-8") 
     wlog("Web_取訂單資料_單純取資料","獲取訂單資訊結束",false)
     if(局_Code)
+        webgo("浏览器0",Cw_国家网址[参_国家])
         if(C_调试)
             局_ID = 正则子表达式匹配(局_Code,"<p id=\"para\" style=\"padding:5px 0px 0px 0px;\">([a-zA-Z0-9\\._-]+)",false,true,true)
         else
@@ -100,7 +103,16 @@ function Web_取订单资料_单纯取资料(参_国家)
         var 局_贴图名称 = Web_取订单资料_单纯取资料_贴图名称处理(局_Code)
         var 局_资料=array()
         if(局_ID[0] != null && 局_LineWeb != null && (!fileexist(C_个别资料夹 & "發圖中.txt"))) //(strfind(aa,"已處理") == -1 || aa == "" ) 確保不是再發圖得狀態
-            //arraypush(局_资料,C_帐密[0],"Login")
+            
+            for(var i = 0; i < 10 && !Web_比对页面id和网址(局_ID[0],局_LineWeb); i++)
+                sleep(500)
+                if(i == 9)
+                    wlog("Web_取訂單資料_單純取資料","ID或網址不匹配")
+                    异常推播("ID或網址不匹配---工程師debug用")
+                    return false
+                end
+                
+            end
             arraypush(局_资料,局_ID[0],"ID")
             arraypush(局_资料,"","Message")
             arraypush(局_资料,局_贴图名称,"StkName")
@@ -114,7 +126,7 @@ function Web_取订单资料_单纯取资料(参_国家)
             yes_is已处理_检测已有此图(局_资料)//检测App是否已經發過此圖，可能是上一个回报失败
             Sqlite_写订单(局_资料)
             editsettext("订单资料2"," " & 资讯断行(数组转资讯(局_资料,"Status")))
-            webgo("浏览器0",Cw_国家网址[参_国家])
+            
             wlog("Web_取訂單資料_單純取資料","已發送資料給APP端發圖")
             Sys_置讯息("已發送資料給APP端發圖",true)
             Sql写订单(局_ID[0],局_资料)
@@ -122,14 +134,14 @@ function Web_取订单资料_单纯取资料(参_国家)
             sleep(1000)
             return true
         else
-            if(!fileexist(C_个别资料夹 & "發圖中.txt"))
-                filedelete("C:\\ErrorRecord.txt")
-                filewriteex("C:\\ErrorRecord.txt",局_Code)
-                webgo("浏览器0",Cw_国家网址[参_国家])
-                sleep(2000)
-                异常推播("異常Z-訂單資料無法分析,請人工處理並填工單，請把C:\\ErrorRecord.txt提交給工程師")
-                Web_点选Boss("異常Z-其他錯誤 - Manual_Handling26","異常無法分析",true)
-            end
+            //            if(!fileexist(C_个别资料夹 & "發圖中.txt"))
+            //                filedelete("C:\\ErrorRecord.txt")
+            //                filewriteex("C:\\ErrorRecord.txt",局_Code)
+            //                webgo("浏览器0",Cw_国家网址[参_国家])
+            //                sleep(2000)
+            //                异常推播("異常Z-訂單資料無法分析,請人工處理並填工單，請把C:\\ErrorRecord.txt提交給工程師")
+            //                Web_点选Boss("異常Z-其他錯誤 - Manual_Handling26","異常無法分析",true)
+            //            end
             
             
         end
@@ -154,6 +166,7 @@ function Web_取订单资料_单纯取资料_贴图名称处理(参_网页码)
                 局_result = strreplace(局_result,"&","")
                 局_result = strreplace(局_result,";","")
                 局_result = strreplace(局_result,"\"","")
+                局_result = strreplace(局_result,"#39","")
                 return 局_result
             end
         end
@@ -201,8 +214,6 @@ function Web_取待送国家(参_讯息="") //取有多少資料可以送
     var 局_页面 = http_获取源码(C_YabeWeb & "Member2.php") //http获取页面源码(C_YabeWeb & "Member2.php","utf-8")
     wlog("Web_取待送國家","獲取待送國家完成",false)
     filewriteex("A:\\123.txt",局_页面)
-    //filewriteex("A:\\123.txt",局_页面,2)
-    // 设置剪切板(局_页面)
     if(strfind(局_页面,"發完") > -1 || fileexist(C_个别资料夹 & "發圖中.txt")) // 已經發完網站無訂單，
         Web_取待送国家_是否发完(局_页面)
         return ""
@@ -319,6 +330,7 @@ end
 function Web_比对页面id和网址(参_ID,参_网址)
     var web = "var a = $(\"[id=Name]\"); return a[1].value;"
     var id = "var a = document.getElementsByName(\"Line_ID\");return a[1].value;"
+    wlog("Web_比對頁面id和網址",strformat("原本ID:%s 原本網址%s 網頁ID:%s 網頁網址:%s",参_ID,参_网址,网页执行js("浏览器0",id),网页执行js("浏览器0",web)),false)
     if(网页执行js("浏览器0",web) == 参_网址 && 网页执行js("浏览器0",id) == 参_ID)
         return true
     end
@@ -380,13 +392,12 @@ function Sqlite_写订单(参_Data)
     if(局_写入 != "")
         if(sqlitesqlarray(C_DB_OrderPath,"SELECT COUNT() FROM [OrderData] LIMIT 500",局_数组))
             if(局_数组[0]["COUNT()"] == 0)
-                // 设置剪切板("Insert into `OrderData` (Data) values ('%s')")
                 sqlitesqlarray(C_DB_OrderPath,"Insert into `OrderData` (Data) values ('"& 局_写入 &"')",局_数组)
                 return ""
             end
         end
     end
-    //设置剪切板("Update `OrderData` Set Data='" & 局_写入 & "'")
+    
     if(sqlitesqlarray(C_DB_OrderPath,"Update `OrderData` Set Data='" & 局_写入 & "'",局_数组))
         if(局_写入 != "")
             wlog("Sqlite_寫訂單","準備開放權限給App",false)
@@ -448,7 +459,18 @@ function 数组转资讯推播整理(参_数组,参_过滤="",参_过滤空值=f
         end
         if(strfind(参_过滤,局_Key) == -1)
             if(局_Key == "LineWeb")
-                局_讯息 =  局_讯息 & 局_Key & "：" & 局_Value & " | " & " | "
+                var 局_网站编号 = strsub(参_数组["StkName"],0,strfind(参_数组["StkName"],"-"))
+                局_讯息 =  局_讯息 & "http://yabeline.tw/Stickers_Search.php?Search=" & 局_网站编号 & " | " 
+                
+                局_讯息 =  局_讯息 & 局_Key & "：" & 局_Value & " | " 
+                if(strfind(参_数组["StkName"],"theme") == -1)
+                    局_讯息 =  局_讯息 & "http://yabeline.tw/Admin_Stickers_Edit.php?Number=" & 局_网站编号 & "%26Type=1"  & " | "  & " | "
+                else
+                    局_讯息 =  局_讯息 & "http://yabeline.tw/Admin_Stickers_Edit.php?Number=" & 局_网站编号 & "%26Type=2"  & " | "  & " | "
+                end
+            elseif(局_Key == "ID")
+                局_讯息 =  局_讯息 & 局_Key & "：" & 局_Value & " | " & "http://yabeline.tw/Admin_User.php?Line_ID=" & 局_Value & " | "
+                
             else
                 局_讯息 = 局_讯息 & 局_Key & "：" & 局_Value & " | "
             end
