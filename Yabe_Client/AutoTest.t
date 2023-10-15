@@ -41,7 +41,7 @@ function 自动下单单元(参_路径,参_ID)
 end
 
 function 结算(参_ID)
-    网页跳转("浏览器0","http://yabeline.tw/Shopping_Cart.php")
+    网页跳转("浏览器0","http://52.199.134.76/Shopping_Cart.php")
     等待元素出现("class:form-control btn btn-success&txt:前往結帳","text","前往結帳")
     Auto_SetLineId(参_ID)
     网页元素点击("浏览器0","class:form-control btn btn-success&txt:前往結帳")

@@ -20,39 +20,68 @@ function xy_运行模拟器(参_名称, 参_关闭 = true)
     sleep(200)
     //cmd(xy_获取安装路径() &"\\MEmu\\MEmu " & 参_名称,true)
     traceprint(xy_获取多开器路径() & " " & 参_名称)
-    进程打开ex(xy_获取多开器路径(),参_名称)
+    进程打开ex(xy_获取多开器路径(), 参_名称)
     //cmd(xy_获取多开器路径() & " " & 参_名称, true)
 end
 
+function xy_取Memuc路徑路径()
+    return "\"" & xy_获取安装路径() & "\\MEmu\\memuc.exe\""
+end
+
+
 function xy_置imei(参_名称)
     var 局_imei = ""
-    for(var i = 0; i < 15; i ++)
+    for(var i = 0; i < 15; i++)
         sleep(随机数(1, 9))
         局_imei = 局_imei & cstring(随机数(1, 9)) 
     end
     cmd(xy_取Manage路徑路径() & " guestproperty set \"" & 参_名称 & "\" imei " & 局_imei, true)
 end
 
+function xy_memuc_adb(index, command)
+    var result = PipeCmd(xy_取Memuc路徑路径() & strformat(" -i %s adb \"%s\"", index, command))
+    return result
+end
 
+function xy_listvms()
+    
+    var array_vms = array()
+    var temp_array = array()
+    var result_array = array()
+    var result = PipeCmd(xy_取Memuc路徑路径() & " listvms", 5000)
+    for(var i = 0; i < strsplit(result, "\r\n", array_vms); i++)
+        traceprint(array_vms[i])
+        strsplit(array_vms[i], ",", temp_array)
+        var vm_array = array("index" = temp_array[0], "title" = temp_array[1], "hd" = temp_array[2], "in" = temp_array[3])
+        arraypush(result_array, vm_array, temp_array[1])
+    end
+    traceprint(arraytostring(result_array))
+    return result_array
+end
 
 function xy_关闭模拟器(参_名称, 参_新版 = true)
-    var 局_字串去除2 = "安卓 " & xy_取版本() & " - ", 局_窗口数组
-    var 局_窗口集 = strsplit(枚举窗口(局_字串去除2, 0), "|", 局_窗口数组)
-    var hd 
-    for(var i = 0; i < arraysize(局_窗口数组); i ++)
-        var 局_标题 = 窗口获取标题(局_窗口数组[i])
-        if(strfind(局_标题, 参_名称) > -1)
-            hd = 局_窗口数组[i]
-            break
-        end
+    //    var 局_字串去除2 = "安卓 " & xy_取版本() & " - ", 局_窗口数组
+    //    var 局_窗口集 = strsplit(枚举窗口(局_字串去除2, 0), "|", 局_窗口数组)
+    //    var hd 
+    //    for(var i = 0; i < arraysize(局_窗口数组); i ++)
+    //        var 局_标题 = 窗口获取标题(局_窗口数组[i])
+    //        if(strfind(局_标题, 参_名称) > -1)
+    //            hd = 局_窗口数组[i]
+    //            break
+    //        end
+    //    end
+    var hd = 窗口查找(strformat("%s", 参_名称), "Qt5QWindowIcon")
+    if(hd == 0)
+        hd = 窗口查找(strformat("(%s)", 参_名称), "Qt5QWindowIcon")
     end
     if(hd > 0)
         窗口关闭(hd)
-    elseif(窗口查找("逍遙安卓 2.7.2 - " & 参_名称)>0)
-        窗口关闭(窗口查找("逍遙安卓 2.7.2 - " & 参_名称))
+        Sqlite_写订单("")
+        //    elseif(窗口查找("逍遙安卓 2.7.2 - " & 参_名称)>0)
+        //        窗口关闭(窗口查找("逍遙安卓 2.7.2 - " & 参_名称))
     else
-        wlog("xy_關閉模擬器","找不到模擬器特徵")
-        wlog("xy_關閉模擬器","關閉失敗")
+        wlog("xy_關閉模擬器", "找不到模擬器特徵")
+        wlog("xy_關閉模擬器", "關閉失敗")
     end
     //    cmd(xy_取Manage路徑路径() & " controlvm \""& 参_名称 &"\" poweroff",true)
     //    sleep(3000)
@@ -88,9 +117,9 @@ function xy_安装apk(参_名称, 参_路径, &参_错误讯息 = null)
     end
 end
 
-function xy_卸载apk(参_名称,参_包名, &参_错误讯息 = null)
+function xy_卸载apk(参_名称, 参_包名, &参_错误讯息 = null)
     var 局_返回 = dllcall(xy路径(), "char *", "UninstallVmsApk", "char *", 参_名称, "char *", 参_包名)
-    if(strfind(局_返回,"Success")>-1)
+    if(strfind(局_返回, "Success") > -1)
         return true
     else
         参_错误讯息 = 局_返回
@@ -141,7 +170,7 @@ end
 
 function xy_克隆模拟器(参_名称, 参_超时 = 60)
     //功 能:按模拟器名称克隆模拟器
-    for(var i = 0; i < 参_超时; i ++)
+    for(var i = 0; i < 参_超时; i++)
         var 局_返回 = dllcall(xy路径(), "char *", "CloneVms", "char *", 参_名称)
         if(局_返回 == "Cloneing.")
             return true
@@ -183,6 +212,7 @@ end
 function xy_取Manage路徑路径()
     return xy_获取安装路径() & "\\MEmuHyperv\\MEmuManage.exe"
 end
+
 
 function xy_取模拟器列表()
     var 局_文件夹
@@ -236,7 +266,7 @@ end
 //========================手机通用模组======================//
 function Adb_检查档案(参_当前路径 = true, 参_路径 = "")
     var 局_档列表 = array("adb.exe", "AdbWinApi.dll", "AdbWinUsbApi.dll")
-    for(var i = 0; i < arraysize(局_档列表); i ++)
+    for(var i = 0; i < arraysize(局_档列表); i++)
         if(!fileexist(系统获取进程路径() & 局_档列表[i]))
             return false
         end
